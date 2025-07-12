@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { addConnection } from '@/services/user';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
-import { uploadFile } from '@/services/storage';
 import { Progress } from './ui/progress';
 
 const initialPosts = [
@@ -61,20 +60,19 @@ export function CampusFeed() {
   const { toast } = useToast();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.type.startsWith('image/')) {
-        setFileToUpload(file);
-        setFilePreview(URL.createObjectURL(file));
+        // Create a temporary local URL for the selected image
+        const localUrl = URL.createObjectURL(file);
+        setFilePreview(localUrl);
       } else {
         toast({
           title: "Unsupported File Type",
-          description: "For now, only images are supported.",
+          description: "For now, only images are supported for local preview.",
           variant: "destructive"
         });
       }
@@ -82,7 +80,10 @@ export function CampusFeed() {
   };
   
   const removeFile = () => {
-    setFileToUpload(null);
+    // Revoke the old blob URL to free up memory
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+    }
     setFilePreview(null);
     if(fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -90,43 +91,36 @@ export function CampusFeed() {
   }
 
   const handlePost = async () => {
-    if (!newPost.trim() && !fileToUpload) return;
+    if (!newPost.trim() && !filePreview) return;
 
-    let imageUrl: string | undefined = undefined;
+    // This is a local-only post for testing. It will not be saved to a database.
+    const post = {
+        id: Date.now(), // Use timestamp for unique key in local state
+        authorId: auth.currentUser?.uid || "user1",
+        author: 'User Name (local)', // In a real app, get this from user profile
+        avatar: 'https://placehold.co/40x40.png',
+        handle: '@username',
+        time: 'Just now',
+        content: newPost,
+        image: filePreview, // Use the local blob URL
+        likes: 0,
+        comments: 0,
+        isProject: false,
+    };
 
-    setUploadProgress(0); // Start showing progress bar
-
-    try {
-        if (fileToUpload) {
-            const downloadURL = await uploadFile(fileToUpload, `posts/${auth.currentUser?.uid}/${Date.now()}_${fileToUpload.name}`, setUploadProgress);
-            imageUrl = downloadURL;
-        }
-
-        const post = {
-            id: posts.length + 1,
-            authorId: auth.currentUser?.uid || "user1",
-            author: 'User Name', // In a real app, get this from user profile
-            avatar: 'https://placehold.co/40x40.png',
-            handle: '@username',
-            time: 'Just now',
-            content: newPost,
-            image: imageUrl,
-            likes: 0,
-            comments: 0,
-            isProject: false,
-        };
-        setPosts([post, ...posts]);
-        setNewPost('');
-        removeFile();
-    } catch (error) {
-        toast({
-            title: "Post Failed",
-            description: "There was an error creating your post. Please try again.",
-            variant: "destructive"
-        });
-    } finally {
-        setUploadProgress(null);
+    setPosts([post, ...posts]);
+    setNewPost('');
+    
+    // We don't revoke the URL here so the image stays visible in the feed
+    setFilePreview(null); 
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
     }
+
+    toast({
+        title: "Post Created (Local)",
+        description: "Your post with the image has been added to the feed for this session.",
+    });
   };
 
   const handleConnect = async (authorId: string, authorName: string) => {
@@ -151,7 +145,7 @@ export function CampusFeed() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,video/*,audio/*" />
+      <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
       <Card className="mb-6 bg-card/50 backdrop-blur-sm">
         <CardContent className="p-4">
           <Textarea
@@ -168,20 +162,14 @@ export function CampusFeed() {
                   </Button>
               </div>
           )}
-           {uploadProgress !== null && (
-               <div className="mt-4 space-y-1">
-                <p className="text-sm text-muted-foreground">Uploading...</p>
-                <Progress value={uploadProgress} />
-               </div>
-            )}
           <div className="flex justify-between items-center mt-4">
             <div className="flex gap-1 text-muted-foreground">
                 <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon className="h-5 w-5" /></Button>
                 <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Audio uploads will be available in a future update."})}><Music className="h-5 w-5" /></Button>
                 <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Video uploads will be available in a future update."})}><Video className="h-5 w-5" /></Button>
             </div>
-            <Button className="button-glow" onClick={handlePost} disabled={uploadProgress !== null}>
-                {uploadProgress !== null ? "Posting..." : "Post"}
+            <Button className="button-glow" onClick={handlePost}>
+                Post
             </Button>
           </div>
         </CardContent>
