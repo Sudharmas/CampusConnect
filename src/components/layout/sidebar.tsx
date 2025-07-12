@@ -68,14 +68,16 @@ export function AppSidebar() {
         </SidebarContent>
         <SidebarFooter className="p-4 border-t border-border">
             <div className="flex items-center gap-3">
-                <Avatar>
-                    <AvatarImage src="https://placehold.co/40x40" alt="User" />
-                    <AvatarFallback>CC</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <p className="font-semibold text-sm">User Name</p>
-                    <p className="text-xs text-muted-foreground">user@campus.edu</p>
-                </div>
+                <Link href="/profile" className="flex items-center gap-3 flex-1 overflow-hidden">
+                    <Avatar>
+                        <AvatarImage src="https://placehold.co/40x40" alt="User" />
+                        <AvatarFallback>CC</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 overflow-hidden">
+                        <p className="font-semibold text-sm truncate">User Name</p>
+                        <p className="text-xs text-muted-foreground truncate">user@campus.edu</p>
+                    </div>
+                </Link>
                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
                     <LogOut className="h-5 w-5"/>
                  </Button>
