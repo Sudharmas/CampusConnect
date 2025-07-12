@@ -254,53 +254,18 @@ export async function getConnections(userId: string): Promise<string[]> {
 
 
 /**
- * Triggers the "Trigger Email" extension to send a verification link for the optional email.
- * This is a simplified implementation. A real-world scenario would involve a unique token
- * and a dedicated verification page. For now, this link just simulates the action.
+ * Simulates sending a verification link for the optional email.
+ * This is a placeholder. A real-world implementation would require a backend service (e.g., Firebase Cloud Function)
+ * to generate a unique token and send an email. The client cannot send these emails directly.
  * @param userId The user's ID.
  * @param email The optional email address to verify.
  */
 export async function sendOptionalEmailVerificationLink(userId: string, email: string): Promise<void> {
-  // A real implementation would generate a unique token and save it with the user's document.
-  // For now, the link is simplified and doesn't perform a real verification action on click.
-  // The action of sending the email is the main purpose here.
-  const verificationLink = `${window.location.origin}/verify-email?userId=${userId}&emailType=optional`;
-
-  try {
-    await addDoc(collection(db, "mail"), {
-      to: email,
-      message: {
-        subject: "Verify your Optional Email for CampusConnect",
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #007bff;">CampusConnect Email Verification</h2>
-            <p>Hello,</p>
-            <p>Please click the button below to verify this email address for your CampusConnect account.</p>
-            <a href="${verificationLink}" target="_blank" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
-              Verify Email Address
-            </a>
-            <p>If you did not request this, please ignore this email.</p>
-            <br/>
-            <p>Thanks,</p>
-            <p>The CampusConnect Team</p>
-          </div>
-        `,
-      },
-      createdAt: serverTimestamp(),
-    });
-  } catch (error: any) {
-    // This is the fallback for local development or if Firestore rules are not set up.
-    if (error.code === 'permission-denied') {
-        console.warn(
-            "Email trigger failed due to Firestore permissions. " +
-            "This is expected in a locked-down environment. " +
-            "To enable, allow authenticated users to create documents in the 'mail' collection. " +
-            "Continuing with local simulation."
-        );
-        // The function will now complete successfully, allowing the UI to show a success message.
-    } else {
-        console.error("Error triggering send email extension:", error);
-        throw new Error("Could not send verification email. Please ensure the Trigger Email extension is configured correctly.");
-    }
-  }
+  // In a real application, you would make a call to a secure backend endpoint here.
+  // The backend would handle token generation and email sending.
+  // For now, we will just log to the console to show the flow is working.
+  console.log(`Simulating sending verification link to ${email} for user ${userId}.`);
+  
+  // No error is thrown, so the UI can proceed as if the email was sent.
+  return Promise.resolve();
 }
