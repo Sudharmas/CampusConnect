@@ -12,8 +12,11 @@ const parentDocRef = doc(db, 'colleges', 'college-data');
 export async function getCollegeById(collegeId: string): Promise<College | null> {
     if (!collegeId) return null;
     
-    // The path is now /colleges/college-data/collegedetails/<collegeId>
-    const collegeDocRef = doc(parentDocRef, 'collegedetails', collegeId);
+    // Always convert to uppercase to match the stored ID format
+    const normalizedCollegeId = collegeId.toUpperCase();
+
+    // The path is /colleges/college-data/collegedetails/<collegeId>
+    const collegeDocRef = doc(parentDocRef, 'collegedetails', normalizedCollegeId);
     const collegeDoc = await getDoc(collegeDocRef);
 
     if (collegeDoc.exists()) {
