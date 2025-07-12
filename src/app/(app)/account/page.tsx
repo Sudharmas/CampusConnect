@@ -217,7 +217,7 @@ export default function AccountPage() {
                                 className="mt-2"
                             />
                             <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setDeleteConfirmationInput("")}>Cancel</Aler      tDialogCancel>
+                            <AlertDialogCancel onClick={() => setDeleteConfirmationInput("")}>Cancel</AlertDialogCancel>
                             <AlertDialogAction 
                                 onClick={handleDeleteAccount} 
                                 className="bg-destructive hover:bg-destructive/90"
