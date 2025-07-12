@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, User, Lightbulb, GraduationCap, Code, Settings, LogOut, UserCog } from "lucide-react";
+import { Home, User, Lightbulb, GraduationCap, Code, Settings, LogOut, UserCog, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +72,7 @@ export function AppSidebar() {
     { href: "/partner-finder", icon: Lightbulb, label: "Partner Finder" },
     { href: "/alumni-projects", icon: GraduationCap, label: "Alumni Projects" },
     { href: "/code-editor", icon: Code, label: "Code Editor" },
+    { href: "/chat", icon: MessageSquare, label: "Chat" },
     { href: "/settings", icon: Settings, label: "Settings" },
   ];
 
@@ -167,3 +168,5 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
+
+    

@@ -180,3 +180,38 @@ export async function getAllUsersAsProfileString(): Promise<string> {
         `User ID: ${user.userId}\nName: ${user.name}\nInterests: ${user.interests.join(', ')}\nSkills: ${user.skills.join(', ')}\nBio: ${user.bio}`
     ).join('\n\n---\n\n');
 }
+
+/**
+ * Adds a connection for a user.
+ * Stores connections in a subcollection: /users/{userId}/connections/{connectedUserId}
+ * @param userId The ID of the user initiating the connection.
+ * @param connectedUserId The ID of the user to connect with.
+ */
+export async function addConnection(userId: string, connectedUserId: string): Promise<void> {
+    if (!userId || !connectedUserId) {
+        throw new Error("Both user IDs are required to create a connection.");
+    }
+    if (userId === connectedUserId) {
+        throw new Error("Cannot connect with yourself.");
+    }
+    const connectionDocRef = doc(db, "users", userId, "connections", connectedUserId);
+    await setDoc(connectionDocRef, {
+        connectedAt: serverTimestamp(),
+    });
+}
+
+/**
+ * Retrieves all connections for a given user.
+ * @param userId The ID of the user whose connections to fetch.
+ * @returns A promise that resolves to an array of connected user IDs.
+ */
+export async function getConnections(userId: string): Promise<string[]> {
+    if (!userId) {
+        return [];
+    }
+    const connectionsCollectionRef = collection(db, "users", userId, "connections");
+    const snapshot = await getDocs(connectionsCollectionRef);
+    return snapshot.docs.map(doc => doc.id);
+}
+
+    

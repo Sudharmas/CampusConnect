@@ -1,15 +1,21 @@
+
 "use client";
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, Heart, Share2, Image as ImageIcon, Video, FileText } from 'lucide-react';
+import { MessageCircle, Heart, Share2, ImageIcon, Video, Music, UserPlus } from 'lucide-react';
 import Image from "next/image";
+import { useToast } from '@/hooks/use-toast';
+import { addConnection } from '@/services/user';
+import { auth } from '@/lib/firebase';
+import Link from 'next/link';
 
 const initialPosts = [
   {
     id: 1,
+    authorId: "user2",
     author: 'Alice Johnson',
     avatar: 'https://placehold.co/40x40.png?text=AJ',
     handle: '@alicej',
@@ -19,9 +25,11 @@ const initialPosts = [
     dataAiHint: 'quantum computer',
     likes: 12,
     comments: 4,
+    isProject: true,
   },
   {
     id: 2,
+    authorId: "user3",
     author: 'Bob Williams',
     avatar: 'https://placehold.co/40x40.png?text=BW',
     handle: '@bobw',
@@ -29,17 +37,32 @@ const initialPosts = [
     content: 'Looking for a frontend developer to join my hackathon team. We are building a mobile app to help students find study groups on campus. Tech stack: React Native & Firebase. #hackathon #reactnative',
     likes: 5,
     comments: 8,
+    isProject: true,
+  },
+   {
+    id: 3,
+    authorId: "user4",
+    author: 'Charlie Brown',
+    avatar: 'https://placehold.co/40x40.png?text=CB',
+    handle: '@charlieb',
+    time: '8h ago',
+    content: 'Excited to share that my research paper on sustainable urban planning has been published! Huge thanks to my collaborators.',
+    likes: 25,
+    comments: 10,
+    isProject: false,
   },
 ];
 
 export function CampusFeed() {
   const [posts, setPosts] = useState(initialPosts);
   const [newPost, setNewPost] = useState('');
+  const { toast } = useToast();
 
   const handlePost = () => {
     if (newPost.trim()) {
       const post = {
         id: posts.length + 1,
+        authorId: auth.currentUser?.uid || "user1",
         author: 'User Name',
         avatar: 'https://placehold.co/40x40.png',
         handle: '@username',
@@ -47,9 +70,30 @@ export function CampusFeed() {
         content: newPost,
         likes: 0,
         comments: 0,
+        isProject: false,
       };
       setPosts([post, ...posts]);
       setNewPost('');
+    }
+  };
+
+  const handleConnect = async (authorId: string, authorName: string) => {
+    if (!auth.currentUser) {
+        toast({ title: "Please log in", description: "You need to be logged in to connect with users.", variant: "destructive" });
+        return;
+    }
+    try {
+        await addConnection(auth.currentUser.uid, authorId);
+        toast({
+            title: "Connected!",
+            description: `You are now connected with ${authorName}. They will be prioritized in your Partner Finder results.`,
+        });
+    } catch (error: any) {
+        toast({
+            title: "Error",
+            description: error.message || "Failed to connect.",
+            variant: "destructive",
+        });
     }
   };
 
@@ -64,10 +108,10 @@ export function CampusFeed() {
             onChange={(e) => setNewPost(e.target.value)}
           />
           <div className="flex justify-between items-center mt-4">
-            <div className="flex gap-2 text-muted-foreground">
+            <div className="flex gap-1 text-muted-foreground">
                 <Button variant="ghost" size="icon"><ImageIcon className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="icon"><Music className="h-5 w-5" /></Button>
                 <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon"><FileText className="h-5 w-5" /></Button>
             </div>
             <Button className="button-glow" onClick={handlePost}>Post</Button>
           </div>
@@ -95,15 +139,27 @@ export function CampusFeed() {
               )}
             </CardContent>
             <CardFooter className="flex justify-around p-2">
-              <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-                <MessageCircle className="h-5 w-5" /> {post.comments}
-              </Button>
-              <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-                <Heart className="h-5 w-5" /> {post.likes}
-              </Button>
-              <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
-                <Share2 className="h-5 w-5" /> Share
-              </Button>
+                {post.isProject ? (
+                    <>
+                        <Link href="/chat" className='w-full'><Button variant="ghost" className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary">Collaborate</Button></Link>
+                        <Link href="/chat" className='w-full'><Button variant="ghost" className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary">Source this Project</Button></Link>
+                    </>
+                ) : (
+                    <>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+                            <MessageCircle className="h-5 w-5" /> {post.comments}
+                        </Button>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+                            <Heart className="h-5 w-5" /> {post.likes}
+                        </Button>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary" onClick={() => handleConnect(post.authorId, post.author)}>
+                            <UserPlus className="h-5 w-5" /> Connect
+                        </Button>
+                        <Button variant="ghost" className="flex items-center gap-2 text-muted-foreground hover:text-primary">
+                            <Share2 className="h-5 w-5" /> Share
+                        </Button>
+                    </>
+                )}
             </CardFooter>
           </Card>
         ))}
@@ -111,3 +167,5 @@ export function CampusFeed() {
     </div>
   );
 }
+
+    

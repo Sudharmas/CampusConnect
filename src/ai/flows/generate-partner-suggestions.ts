@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -22,6 +23,10 @@ const PartnerSuggestionsInputSchema = z.object({
     .number()
     .default(5)
     .describe('The number of partner suggestions to generate.'),
+  connectedUserIds: z
+    .array(z.string())
+    .optional()
+    .describe('An optional list of user IDs the current user is already connected with. These users should be given a higher priority or match score.'),
 });
 export type PartnerSuggestionsInput = z.infer<typeof PartnerSuggestionsInputSchema>;
 
@@ -59,6 +64,11 @@ const prompt = ai.definePrompt({
   Your task is to analyze the current user's profile and compare it against all other user profiles available in the system.
   Based on this comparison, you must identify the best potential collaborators.
   Consider shared interests, complementary skills, and common project goals.
+  
+  {{#if connectedUserIds}}
+  The user is already connected with the following user IDs: {{#each connectedUserIds}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}.
+  Please ensure these users are given a very high matchScore (e.g., above 0.9) to reflect their existing connection, in addition to any other good matches you find.
+  {{/if}}
 
   Current User Profile:
   {{{currentUserProfile}}}
@@ -101,3 +111,5 @@ const generatePartnerSuggestionsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
