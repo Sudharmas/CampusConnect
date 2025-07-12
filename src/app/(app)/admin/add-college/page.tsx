@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { auth } from "@/lib/firebase";
 
 export default function AddCollegePage() {
     const { toast } = useToast();
@@ -20,6 +21,17 @@ export default function AddCollegePage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+
+        const user = auth.currentUser;
+        if (!user) {
+            toast({
+                title: "Authentication Error",
+                description: "You must be logged in to add a college.",
+                variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+        }
 
         try {
             await addCollege(collegeId, { name: collegeName, emailDomain: collegeDomain });
