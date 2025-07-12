@@ -1,6 +1,8 @@
 
 "use server";
 
+import type { User } from "./user";
+
 /**
  * A simple, simulated OTP service for demonstration purposes.
  * In a real application, this would integrate with an actual email/SMS service (e.g., Twilio, SendGrid).
@@ -8,25 +10,30 @@
 
 const otpStore: Map<string, { code: string; expires: number }> = new Map();
 const OTP_VALIDITY_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
-const DEMO_OTP = "123456"; // For easy testing
+const ADMIN_OTP = "123456"; // Static OTP for admins
 
 /**
- * "Sends" an OTP to a given email address.
- * In this simulation, it just generates a code and stores it.
+ * "Sends" an OTP to a given email address based on user role.
  * @param email The email address to send the OTP to.
+ * @param role The role of the user ('admin' or 'user').
  */
-export async function sendOtp(email: string): Promise<void> {
-  // For this demo, we will always use a static OTP for simplicity.
-  // In a real app, you would generate a random 6-digit number:
-  // const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const code = DEMO_OTP;
+export async function sendOtp(email: string, role: User['role']): Promise<void> {
+  let code: string;
+
+  if (role === 'admin') {
+    // Use a static, predictable OTP for admins for easy testing.
+    code = ADMIN_OTP;
+  } else {
+    // Generate a random 6-digit number for regular users.
+    code = Math.floor(100000 + Math.random() * 900000).toString();
+  }
   
   const expires = Date.now() + OTP_VALIDITY_DURATION;
   otpStore.set(email, { code, expires });
   
-  // In a real application, you would send the `code` to the `email` here.
-  // For this demo, we'll just log it to the server console.
-  console.log(`OTP for ${email}: ${code}`);
+  // In a real application, you would send the `code` to the `email` here using a service.
+  // For this demo, we'll just log it to the server console for easy access during development.
+  console.log(`OTP for ${email} (role: ${role}): ${code}`);
 }
 
 /**

@@ -128,12 +128,15 @@ export default function AccountPage() {
   const handleSendOtp = async () => {
     if (!campusUser || !campusUser.emailOptional) return;
     try {
-      await sendOtp(campusUser.emailOptional);
+      await sendOtp(campusUser.emailOptional, campusUser.role);
       setEmailToVerify(campusUser.emailOptional);
       setIsOtpDialogOpen(true);
+      const toastDescription = campusUser.role === 'admin' 
+        ? `An OTP has been sent to ${campusUser.emailOptional}. (Hint: For this demo, use 123456)`
+        : `An OTP has been sent to ${campusUser.emailOptional}. Check your inbox for the code.`;
       toast({
         title: "OTP Sent",
-        description: `An OTP has been sent to ${campusUser.emailOptional}. (Hint: For this demo, use 123456)`
+        description: toastDescription
       });
     } catch (error) {
       toast({
@@ -316,7 +319,7 @@ export default function AccountPage() {
                   <DialogTitle>Verify Your Email</DialogTitle>
                   <DialogDescription>
                       An OTP has been sent to {emailToVerify}. Please enter it below.
-                      The code is valid for 15 minutes. (Hint: Use 123456 for this demo).
+                      The code is valid for 15 minutes.
                   </DialogDescription>
               </DialogHeader>
               <Input
