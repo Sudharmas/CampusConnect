@@ -162,11 +162,11 @@ export function CampusFeed() {
   return (
     <div className="max-w-3xl mx-auto">
       <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
-      <Card className="mb-6 bg-card/50 backdrop-blur-sm">
+      <Card className="mb-6 bg-card/70 backdrop-blur-sm">
         <CardContent className="p-4">
           <Textarea
             placeholder="What's on your mind? Share an update, idea, or project..."
-            className="bg-background border-2 border-input focus:border-primary focus:ring-primary/50"
+            className="bg-transparent border-2 border-input focus:border-primary focus:ring-primary/50"
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
           />
@@ -192,7 +192,7 @@ export function CampusFeed() {
       </Card>
       <div className="space-y-6">
         {posts.map((post) => (
-          <Card key={post.id} className="bg-card/50 backdrop-blur-sm">
+          <Card key={post.id} className="bg-card/70 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center gap-4 p-4">
               <Avatar>
                 <AvatarImage src={post.avatar} alt={post.author} />

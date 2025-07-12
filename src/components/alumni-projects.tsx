@@ -42,7 +42,7 @@ export function AlumniProjects() {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {projects.map((project, index) => (
-        <Card key={index} className="bg-card/50 backdrop-blur-sm flex flex-col">
+        <Card key={index} className="bg-card/70 backdrop-blur-sm flex flex-col">
           <CardHeader>
             <div className="flex justify-between items-start">
               <CardTitle className="font-headline text-xl text-primary">{project.title}</CardTitle>

@@ -52,7 +52,7 @@ export function PartnerFinder() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <Textarea
           placeholder="e.g., 'I am a backend developer skilled in Python and Django, looking for a frontend developer to build a social networking app for students.' or 'Interested in sustainable energy projects and looking for partners with engineering or business backgrounds.'"
-          className="min-h-[120px] bg-background"
+          className="min-h-[120px] bg-transparent"
           value={userProfile}
           onChange={(e) => setUserProfile(e.target.value)}
         />

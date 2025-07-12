@@ -22,8 +22,8 @@ import { getUserByUsn } from '@/services/user';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState('user@campus.edu');
-  const [password, setPassword] = useState('password');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="mx-auto max-w-sm w-full bg-card/50 backdrop-blur-sm">
+    <Card className="mx-auto max-w-sm w-full bg-card/70 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-2xl font-headline text-glow">Login</CardTitle>
         <CardDescription>

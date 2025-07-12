@@ -27,7 +27,7 @@ export default function ChatPage() {
         </Button>
       </div>
 
-      <Card className="flex-grow flex flex-col bg-card/50 backdrop-blur-sm">
+      <Card className="flex-grow flex flex-col bg-card/70 backdrop-blur-sm">
         <CardHeader className="border-b">
             <div className='flex items-center gap-4'>
                  <Avatar>
@@ -68,7 +68,7 @@ export default function ChatPage() {
 
         <CardFooter className="p-4 border-t flex flex-col items-start gap-4">
             <div className="w-full flex items-center gap-2">
-                <Input placeholder="Type your message..." className="flex-grow" />
+                <Input placeholder="Type your message..." className="flex-grow bg-transparent" />
                 <Button className="button-glow">
                     <Send className="h-4 w-4" />
                 </Button>
@@ -82,5 +82,3 @@ export default function ChatPage() {
     </div>
   );
 }
-
-    

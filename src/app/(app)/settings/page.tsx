@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 export default function SettingsPage() {
   return (
     <div className="container mx-auto">
-      <Card className="max-w-3xl mx-auto bg-card/50 backdrop-blur-sm">
+      <Card className="max-w-3xl mx-auto bg-card/70 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="font-headline text-3xl text-glow">Settings</CardTitle>
           <CardDescription>Manage your account settings and preferences.</CardDescription>

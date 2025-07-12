@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export function AppHeader() {
   return (
-    <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-6">
+    <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-background/50 backdrop-blur-sm px-6">
       <div className="md:hidden">
         <SidebarTrigger />
       </div>

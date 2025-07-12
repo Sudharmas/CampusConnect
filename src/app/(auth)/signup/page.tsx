@@ -178,7 +178,7 @@ export default function SignupPage() {
   }
 
   return (
-    <Card className="mx-auto max-w-lg w-full bg-card/50 backdrop-blur-sm">
+    <Card className="mx-auto max-w-lg w-full bg-card/70 backdrop-blur-sm">
       <CardHeader>
         <CardTitle className="text-2xl font-headline text-glow">Sign Up</CardTitle>
         <CardDescription>

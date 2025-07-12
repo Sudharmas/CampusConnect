@@ -201,7 +201,7 @@ export default function AccountPage() {
 
   return (
     <div className="container mx-auto">
-      <Card className="max-w-3xl mx-auto bg-card/50 backdrop-blur-sm">
+      <Card className="max-w-3xl mx-auto bg-card/70 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="font-headline text-3xl text-glow">Account Management</CardTitle>
           <CardDescription>Manage your email addresses and account settings.</CardDescription>
@@ -269,7 +269,7 @@ export default function AccountPage() {
           
           <div className="space-y-4">
              <h3 className="text-lg font-medium font-headline text-destructive">Danger Zone</h3>
-             <Card className="border-destructive/50">
+             <Card className="border-destructive/50 bg-destructive/10">
                 <CardHeader className="flex-row items-center justify-between">
                     <div>
                         <CardTitle className="text-lg text-destructive">Delete Account</CardTitle>

@@ -2,6 +2,7 @@
 import { AppSidebar } from "@/components/layout/sidebar";
 import { AppHeader } from "@/components/layout/header";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import AnimatedBackground from "@/components/ui/animated-background";
 
 export default function AppLayout({
   children,
@@ -10,7 +11,8 @@ export default function AppLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full relative">
+        <AnimatedBackground variant="app" />
         <AppSidebar />
         <div className="flex flex-col flex-1 h-screen">
           <AppHeader />
@@ -22,5 +24,3 @@ export default function AppLayout({
     </SidebarProvider>
   );
 }
-
-    

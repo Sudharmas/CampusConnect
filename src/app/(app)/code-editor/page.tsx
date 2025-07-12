@@ -41,7 +41,7 @@ main();
                 </Button>
             </div>
         </div>
-        <Card className="flex-grow flex flex-col bg-card/50 backdrop-blur-sm">
+        <Card className="flex-grow flex flex-col bg-card/70 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between p-2 border-b">
                 <div className="flex items-center gap-1">
                     <Button variant="ghost" size="sm" className="bg-muted">index.js</Button>

@@ -52,7 +52,7 @@ export default function AddCollegePage() {
 
     return (
         <div className="container mx-auto">
-            <Card className="max-w-xl mx-auto bg-card/50 backdrop-blur-sm">
+            <Card className="max-w-xl mx-auto bg-card/70 backdrop-blur-sm">
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl text-glow">Add College Details</CardTitle>
                     <CardDescription>Use this form to add a new college to the Firestore database. No login required.</CardDescription>

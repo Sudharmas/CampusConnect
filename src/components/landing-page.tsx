@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Code, Users, BrainCircuit } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import Image from "next/image";
+import AnimatedBackground from './ui/animated-background';
 
 export function LandingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      <header className="px-4 lg:px-6 h-14 flex items-center">
+      <AnimatedBackground />
+      <header className="px-4 lg:px-6 h-14 flex items-center z-10">
         <Link href="#" className="flex items-center justify-center" prefetch={false}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -52,7 +54,6 @@ export function LandingPage() {
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 relative">
-          <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:linear-gradient(to_bottom,white_5%,transparent_50%)]"></div>
           <div className="container px-4 md:px-6 text-center relative">
             <div className="space-y-4">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none font-headline text-glow">
@@ -75,7 +76,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-background">
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-transparent">
           <div className="container px-4 md:px-6">
             <h2 className="text-3xl font-bold tracking-tighter text-center sm:text-4xl md:text-5xl font-headline text-glow">
               Everything You Need to Innovate
@@ -84,19 +85,19 @@ export function LandingPage() {
               Discover a suite of powerful tools designed for seamless collaboration and project development.
             </p>
             <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:grid-cols-3 lg:gap-12 mt-12">
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+              <Card className="bg-card/70 backdrop-blur-sm border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-headline"><BrainCircuit className="text-primary text-glow"/> AI Partner Matching</CardTitle>
                   <CardDescription>Our intelligent algorithm connects you with the perfect collaborators based on your skills and interests.</CardDescription>
                 </CardHeader>
               </Card>
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+              <Card className="bg-card/70 backdrop-blur-sm border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-headline"><Code className="text-primary text-glow"/> Real-time Code Editor</CardTitle>
                   <CardDescription>Collaborate on code with a built-in, multi-user editor. Perfect for hackathons and group projects.</CardDescription>
                 </CardHeader>
               </Card>
-              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+              <Card className="bg-card/70 backdrop-blur-sm border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary text-glow"/> Campus & Alumni Network</CardTitle>
                   <CardDescription>Engage with a vibrant community of students and alumni. Share ideas, get feedback, and find inspiration.</CardDescription>
@@ -106,7 +107,7 @@ export function LandingPage() {
           </div>
         </section>
 
-        <section id="alumni" className="w-full py-12 md:py-24 lg:py-32">
+        <section id="alumni" className="w-full py-12 md:py-24 lg:py-32 bg-transparent">
           <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
             <div className="space-y-3">
               <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight font-headline text-glow">
@@ -124,7 +125,7 @@ export function LandingPage() {
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t z-10 bg-background">
         <p className="text-xs text-muted-foreground">&copy; 2024 CampusConnect. All rights reserved.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>

@@ -1,4 +1,6 @@
+
 import Link from "next/link";
+import AnimatedBackground from "@/components/ui/animated-background";
 
 export default function AuthLayout({
   children,
@@ -6,7 +8,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center p-4 bg-background">
+    <div className="flex flex-col min-h-screen items-center justify-center p-4 bg-transparent">
+      <AnimatedBackground variant="login" />
       <div className="absolute top-6 left-6">
         <Link href="/" className="flex items-center justify-center" prefetch={false}>
           <svg
