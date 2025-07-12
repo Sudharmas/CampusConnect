@@ -7,16 +7,14 @@ export interface College {
     emailDomain: string;
 }
 
-const parentDocRef = doc(db, 'colleges', 'college-data');
-
 export async function getCollegeById(collegeId: string): Promise<College | null> {
     if (!collegeId) return null;
     
     // Always convert to uppercase to match the stored ID format
     const normalizedCollegeId = collegeId.toUpperCase();
 
-    // The path is /colleges/college-data/collegedetails/<collegeId>
-    const collegeDocRef = doc(parentDocRef, 'collegedetails', normalizedCollegeId);
+    // The new, simplified path is /colleges/<collegeId>
+    const collegeDocRef = doc(db, 'colleges', normalizedCollegeId);
     const collegeDoc = await getDoc(collegeDocRef);
 
     if (collegeDoc.exists()) {

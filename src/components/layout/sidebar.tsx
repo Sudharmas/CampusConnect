@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
+import { collectionGroup, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 
@@ -32,7 +32,8 @@ export function AppSidebar() {
     const fetchUserData = async () => {
       const user = auth.currentUser;
       if (user) {
-        // Since we don't know the collegeID, we must perform a collection group query.
+        // A collectionGroup query is the right tool to find a user's document
+        // without knowing their specific collegeId beforehand.
         const usersCollectionGroup = collectionGroup(db, 'users');
         const q = query(usersCollectionGroup, where("id", "==", user.uid), limit(1));
         const querySnapshot = await getDocs(q);
