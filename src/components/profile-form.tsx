@@ -22,6 +22,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import type { User } from "@/services/user";
 import { updateUser, UserUpdatePayload } from "@/services/user";
 import { auth } from "@/lib/firebase";
+import { PremiumButton } from "./ui/premium-button";
+import { Separator } from "./ui/separator";
 
 // Debounce function
 const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
@@ -235,6 +237,17 @@ export function ProfileForm({ initialData, isEditing, onSave, onCancel, localAva
             <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
             <Button type="button" onClick={onSave} className="button-glow">Done Editing</Button>
             </div>
+        )}
+        
+        {!isEditing && (
+          <>
+            <Separator className="my-8" />
+            <div className="flex flex-col items-center justify-center space-y-2">
+               <h3 className="text-xl font-headline text-glow">Unlock Your Potential</h3>
+               <p className="text-muted-foreground text-center">Go Premium to get exclusive access to top projects and direct mentorship.</p>
+               <PremiumButton>Upgrade to Premium</PremiumButton>
+            </div>
+          </>
         )}
       </form>
     </Form>
