@@ -1,6 +1,6 @@
 'use server';
 import { db } from "@/lib/firebase";
-import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 interface CollegeData {
     name: string;
@@ -9,7 +9,7 @@ interface CollegeData {
 
 /**
  * Adds or updates a college in the 'collegedetails' subcollection.
- * This subcollection lives under the document: /colleges/college-data.
+ * The path is /colleges/college-data/collegedetails/{collegeId}.
  * @param collegeId The unique ID for the college (e.g., '4SN').
  * @param collegeData The data for the college.
  */
@@ -22,15 +22,8 @@ export async function addCollege(collegeId: string, collegeData: CollegeData): P
     }
 
     try {
-        const parentDocRef = doc(db, 'colleges', 'college-data');
-        const collegeDocRef = doc(parentDocRef, 'collegedetails', collegeId);
-
-        // Ensure the parent document exists. This is often necessary due to security rules.
-        const parentDocSnap = await getDoc(parentDocRef);
-        if (!parentDocSnap.exists()) {
-            // We can set it with some metadata, or leave it empty.
-            await setDoc(parentDocRef, { createdAt: serverTimestamp() });
-        }
+        // The full path to the document we want to create or update.
+        const collegeDocRef = doc(db, 'colleges', 'college-data', 'collegedetails', collegeId.toUpperCase());
 
         await setDoc(collegeDocRef, {
             ...collegeData,
@@ -40,7 +33,6 @@ export async function addCollege(collegeId: string, collegeData: CollegeData): P
 
     } catch (error) {
         console.error("Error adding college: ", error);
-        // The original error might have more details. Let's re-throw it for better debugging.
         if (error instanceof Error) {
             throw new Error(`Failed to add college to the database: ${error.message}`);
         }
