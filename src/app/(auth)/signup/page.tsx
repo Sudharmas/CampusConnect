@@ -19,7 +19,7 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
@@ -163,15 +163,24 @@ export default function SignupPage() {
         branch: values.branch,
       });
 
+      // Automatically log the user in
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+
       toast({
           title: "Account Created!",
-          description: "Welcome to CampusConnect. Please log in.",
+          description: "Welcome to CampusConnect! Redirecting you to the dashboard.",
       });
-      router.push('/login');
+      router.push('/dashboard');
     } catch (error: any) {
+        let errorMessage = "An unknown error occurred.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "This email is already in use by another account.";
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
         toast({
             title: "Sign up failed",
-            description: error.message,
+            description: errorMessage,
             variant: "destructive",
         })
     }
