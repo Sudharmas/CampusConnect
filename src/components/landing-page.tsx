@@ -1,0 +1,135 @@
+'use client';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Code, Users, BrainCircuit } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import Image from "next/image";
+
+export function LandingPage() {
+  return (
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <header className="px-4 lg:px-6 h-14 flex items-center">
+        <Link href="#" className="flex items-center justify-center" prefetch={false}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-6 w-6 text-primary text-glow"
+          >
+            <path d="M10.19 1.44a1 1 0 0 0-1.02.06l-4.5 3.22a1 1 0 0 0-.47.85v12.86a1 1 0 0 0 .47.85l4.5 3.22a1 1 0 0 0 1.02.06l11-7.86a1 1 0 0 0 0-1.8l-11-7.86Z" />
+            <path d="m11 13-6 4.29" />
+            <path d="m11 13-6-4.29" />
+            <path d="M11 13v9" />
+            <path d="M11 13 22 5" />
+          </svg>
+          <span className="ml-2 text-lg font-bold font-headline text-glow">CampusConnect</span>
+        </Link>
+        <nav className="ml-auto flex gap-4 sm:gap-6">
+          <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Features
+          </Link>
+          <Link href="#alumni" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Alumni
+          </Link>
+          <Link href="/dashboard" prefetch={false}>
+            <Button variant="outline" className="button-glow">
+              Launch App
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </nav>
+      </header>
+      <main className="flex-1">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 relative">
+          <div className="absolute inset-0 bg-grid-cyan-500/10 [mask-image:linear-gradient(to_bottom,white_5%,transparent_50%)]"></div>
+          <div className="container px-4 md:px-6 text-center relative">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none font-headline text-glow">
+                Connect. Collaborate. Create.
+              </h1>
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+                The ultimate platform for students and alumni to build the future, together. Find partners, launch projects, and make your mark.
+              </p>
+              <div className="space-x-4">
+                <Link
+                  href="/dashboard"
+                  prefetch={false}
+                >
+                  <Button size="lg" className="button-glow bg-primary text-primary-foreground">
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-background">
+          <div className="container px-4 md:px-6">
+            <h2 className="text-3xl font-bold tracking-tighter text-center sm:text-4xl md:text-5xl font-headline text-glow">
+              Everything You Need to Innovate
+            </h2>
+            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl text-center mt-4">
+              Discover a suite of powerful tools designed for seamless collaboration and project development.
+            </p>
+            <div className="mx-auto grid max-w-5xl items-start gap-8 sm:grid-cols-2 md:grid-cols-3 lg:gap-12 mt-12">
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-headline"><BrainCircuit className="text-primary text-glow"/> AI Partner Matching</CardTitle>
+                  <CardDescription>Our intelligent algorithm connects you with the perfect collaborators based on your skills and interests.</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-headline"><Code className="text-primary text-glow"/> Real-time Code Editor</CardTitle>
+                  <CardDescription>Collaborate on code with a built-in, multi-user editor. Perfect for hackathons and group projects.</CardDescription>
+                </CardHeader>
+              </Card>
+              <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary text-glow"/> Campus & Alumni Network</CardTitle>
+                  <CardDescription>Engage with a vibrant community of students and alumni. Share ideas, get feedback, and find inspiration.</CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        <section id="alumni" className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
+            <div className="space-y-3">
+              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight font-headline text-glow">
+                Bridge the Gap Between Campus and Career
+              </h2>
+              <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Alumni can post exclusive projects, offering students real-world experience and mentorship opportunities.
+              </p>
+            </div>
+            <div className="mx-auto w-full max-w-sm space-y-2">
+              <Link href="/alumni-projects">
+                <Button type="submit" className="w-full button-glow">Explore Alumni Projects</Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+        <p className="text-xs text-muted-foreground">&copy; 2024 CampusConnect. All rights reserved.</p>
+        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Terms of Service
+          </Link>
+          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Privacy
+          </Link>
+        </nav>
+      </footer>
+    </div>
+  );
+}
