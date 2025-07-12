@@ -282,7 +282,7 @@ export default function SignupPage() {
                                 <SelectItem value="Information Science">Information Science</SelectItem>
                                 <SelectItem value="Electronics">Electronics</SelectItem>
                                 <SelectItem value="Mechanical">Mechanical</SelectItem>
-                                <SelectItem value="Civil">Civil</SelsctItem>
+                                <SelectItem value="Civil">Civil</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
