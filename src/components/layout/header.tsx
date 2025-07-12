@@ -2,6 +2,7 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Bell, User } from "lucide-react";
+import Link from "next/link";
 
 export function AppHeader() {
   return (
@@ -16,9 +17,11 @@ export function AppHeader() {
         <Button variant="ghost" size="icon">
             <Bell className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors"/>
         </Button>
-        <Button variant="ghost" size="icon">
-            <User className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors"/>
-        </Button>
+        <Link href="/profile">
+          <Button variant="ghost" size="icon">
+              <User className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors"/>
+          </Button>
+        </Link>
       </div>
     </header>
   );

@@ -9,28 +9,83 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Home, User, Lightbulb, GraduationCap, Code, Settings, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/profile", icon: User, label: "Profile" },
-  { href: "/partner-finder", icon: Lightbulb, label: "Partner Finder" },
-  { href: "/alumni-projects", icon: GraduationCap, label: "Alumni Projects" },
-  { href: "/code-editor", icon: Code, label: "Code Editor" },
-  { href: "/settings", icon: Settings, label: "Settings" },
-];
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+  const [userProfile, setUserProfile] = useState<{ fullName: string, email: string, profilePhotoURL?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserProfile({
+            fullName: `${data.firstName} ${data.lastName}`,
+            email: data.emailPrimary,
+            profilePhotoURL: data.profilePhotoURL
+          });
+        }
+      }
+    };
+    
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        fetchUserData();
+      } else {
+        setUserProfile(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const navItems = [
+    { href: "/dashboard", icon: Home, label: "Dashboard" },
+    { href: "/profile", icon: User, label: "Profile" },
+    { href: "/partner-finder", icon: Lightbulb, label: "Partner Finder" },
+    { href: "/alumni-projects", icon: GraduationCap, label: "Alumni Projects" },
+    { href: "/code-editor", icon: Code, label: "Code Editor" },
+    { href: "/settings", icon: Settings, label: "Settings" },
+  ];
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push("/login");
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <Sidebar>
         <SidebarHeader className="p-4">
-            <div className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
                  <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -50,7 +105,7 @@ export function AppSidebar() {
                     <path d="M11 13 22 5" />
                 </svg>
                 <span className="text-xl font-bold font-headline text-glow">CampusConnect</span>
-            </div>
+            </Link>
         </SidebarHeader>
         <SidebarContent className="p-4">
             <SidebarMenu>
@@ -70,19 +125,17 @@ export function AppSidebar() {
             <div className="flex items-center gap-3">
                 <Link href="/profile" className="flex items-center gap-3 flex-1 overflow-hidden">
                     <Avatar>
-                        <AvatarImage src="https://placehold.co/40x40" alt="User" />
-                        <AvatarFallback>CC</AvatarFallback>
+                        <AvatarImage src={userProfile?.profilePhotoURL || "https://placehold.co/40x40"} alt="User" />
+                        <AvatarFallback>{userProfile?.fullName ? userProfile.fullName.charAt(0) : 'U'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 overflow-hidden">
-                        <p className="font-semibold text-sm truncate">User Name</p>
-                        <p className="text-xs text-muted-foreground truncate">user@campus.edu</p>
+                        <p className="font-semibold text-sm truncate">{userProfile?.fullName || 'User Name'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{userProfile?.email || 'user@campus.edu'}</p>
                     </div>
                 </Link>
-                 <Link href="/">
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                        <LogOut className="h-5 w-5"/>
-                    </Button>
-                 </Link>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={handleLogout}>
+                    <LogOut className="h-5 w-5"/>
+                </Button>
             </div>
         </SidebarFooter>
     </Sidebar>

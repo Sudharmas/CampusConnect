@@ -12,9 +12,12 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const PartnerSuggestionsInputSchema = z.object({
-  userProfile: z
+  currentUserProfile: z
     .string()
-    .describe('The user profile information including interests and skills.'),
+    .describe('The current user\'s profile information including interests and skills.'),
+  allUserProfiles: z
+    .string()
+    .describe('A string containing the profiles of all users in the system.'),
   numberOfSuggestions: z
     .number()
     .default(5)
@@ -28,7 +31,7 @@ const PartnerSuggestionSchema = z.object({
   commonInterests: z
     .array(z.string())
     .describe('A list of common interests with the user.'),
-  matchScore: z.number().describe('A score indicating the strength of the match.'),
+  matchScore: z.number().describe('A score between 0 and 1 indicating the strength of the match.'),
 });
 
 const PartnerSuggestionsOutputSchema = z.object({
@@ -51,17 +54,24 @@ const prompt = ai.definePrompt({
   output: {
     schema: PartnerSuggestionsOutputSchema,
   },
-  prompt: `You are an AI assistant designed to suggest potential collaboration partners to users.
+  prompt: `You are an AI assistant designed to suggest potential collaboration partners to users on a campus platform.
 
-  Based on the user's profile information, identify other users who would be a good fit for collaboration.
-  Consider interests, skills, and project goals when making your suggestions.
+  Your task is to analyze the current user's profile and compare it against all other user profiles available in the system.
+  Based on this comparison, you must identify the best potential collaborators.
+  Consider shared interests, complementary skills, and common project goals.
 
-  User Profile: {{{userProfile}}}
-  Number of Suggestions: {{{numberOfSuggestions}}}
+  Current User Profile:
+  {{{currentUserProfile}}}
 
-  Return a JSON array of partner suggestions.
-  Each suggestion should include the userId, name, a list of commonInterests and a matchScore between 0 and 1.
-  Example:
+  All User Profiles in the system:
+  {{{allUserProfiles}}}
+
+  Please generate {{{numberOfSuggestions}}} partner suggestions.
+  Return a JSON object containing a list of these suggestions.
+  Each suggestion should include the userId, name, a list of commonInterests, and a matchScore (a float between 0 and 1).
+  Do not suggest the current user to themselves.
+  
+  Example Output:
   {
     "suggestions": [
       {
