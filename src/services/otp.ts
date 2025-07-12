@@ -34,7 +34,7 @@ export async function sendOtp(email: string, role: User['role']): Promise<void> 
     // For admins, we use a static OTP and don't actually send an email.
     const expires = Date.now() + 15 * 60 * 1000; // 15 minutes
     otpStore.set(email, { code: ADMIN_OTP, expires });
-    console.log(`Admin OTP for ${email}: ${ADMIN_OTP}`);
+    console.log(`Admin OTP for ${email}: ${ADMIN_OTP}`); // This is for testing convenience
     return;
   }
 
