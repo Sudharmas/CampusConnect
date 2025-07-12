@@ -3,10 +3,31 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Code, Users, BrainCircuit } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import Image from "next/image";
+import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import AnimatedBackground from './ui/animated-background';
 
 export function LandingPage() {
+  const router = useRouter();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleExploreProjects = () => {
+    if (user) {
+      router.push('/alumni-projects');
+    } else {
+      router.push('/login');
+    }
+  };
+  
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <AnimatedBackground />
@@ -121,9 +142,7 @@ export function LandingPage() {
               </p>
             </div>
             <div className="mx-auto w-full max-w-sm space-y-2">
-              <Link href="/alumni-projects">
-                <Button type="submit" className="w-full button-glow">Explore Alumni Projects</Button>
-              </Link>
+              <Button type="button" className="w-full button-glow" onClick={handleExploreProjects}>Explore Alumni Projects</Button>
             </div>
           </div>
         </section>
