@@ -3,22 +3,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow user creation by anyone, but only allow authenticated users to read/update.
+    // Users can be created by anyone (for signup).
+    // Authenticated users can read all profiles (for partner search).
+    // A user can only update their own profile.
     match /users/{userId} {
       allow create: if true;
       allow read: if request.auth != null;
       allow update, delete: if request.auth.uid == userId;
 
-      // Allow anyone to read/write their own connections
-      match /connections/{connectionId} {
+      // Allow access to subcollections like 'connections'
+      match /{allPaths=**} {
         allow read, write: if request.auth.uid == userId;
       }
     }
 
-    // Allow anyone to read and create college details for signup and admin functionality.
+    // College details can be read and created by anyone.
     match /collegedetails/{collegeId} {
       allow read, create: if true;
-      allow update, delete: if request.auth != null; // Only authenticated users can change details
     }
   }
 }
