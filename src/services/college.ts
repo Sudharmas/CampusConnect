@@ -12,8 +12,8 @@ const parentDocRef = doc(db, 'colleges', 'college-data');
 export async function getCollegeById(collegeId: string): Promise<College | null> {
     if (!collegeId) return null;
     
-    // The path is now /colleges/college-data/all-colleges/<collegeId>
-    const collegeDocRef = doc(parentDocRef, 'all-colleges', collegeId);
+    // The path is now /colleges/college-data/collegedetails/<collegeId>
+    const collegeDocRef = doc(parentDocRef, 'collegedetails', collegeId);
     const collegeDoc = await getDoc(collegeDocRef);
 
     if (collegeDoc.exists()) {

@@ -8,8 +8,8 @@ interface CollegeData {
 }
 
 /**
- * Adds or updates a college in the 'all-colleges' subcollection.
- * This subcollection lives under a single document: /colleges/college-data.
+ * Adds or updates a college in the 'collegedetails' subcollection.
+ * This subcollection lives under the document: /colleges/college-data.
  * @param collegeId The unique ID for the college (e.g., 'SAMPLE01').
  * @param collegeData The data for the college.
  */
@@ -20,7 +20,7 @@ export async function addCollege(collegeId: string, collegeData: CollegeData): P
 
     try {
         // Define the path to the subcollection
-        const collegeDocRef = doc(db, 'colleges', 'college-data', 'all-colleges', collegeId);
+        const collegeDocRef = doc(db, 'colleges', 'college-data', 'collegedetails', collegeId);
 
         // Set the college document in the subcollection
         await setDoc(collegeDocRef, {
