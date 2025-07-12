@@ -3,24 +3,29 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allows anyone to read any user profile.
-    // Allows any authenticated user to update their own profile.
-    // Allows anyone to create a new user document (for signup).
+
+    // Allow anyone to read and create user documents.
+    // This allows the signup page to work.
+    // A user can only update or delete their own document.
     match /users/{userId} {
-      allow read: if true;
-      allow create: if true;
+      allow read, create: if true;
       allow update, delete: if request.auth != null && request.auth.uid == userId;
-      
-      // Allow any authenticated user to manage their own connections.
+
+      // Allow authenticated users to manage their own connections.
       match /connections/{connectedUserId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
     
-    // Allows anyone to read or write to the collegedetails collection.
-    // This is required for the /admin/add-college page to work without login.
+    // Allow anyone to read and write to the collegedetails collection.
+    // This allows the admin page to add new colleges.
     match /collegedetails/{collegeId} {
-        allow read, write: if true;
+      allow read, write: if true;
+    }
+
+    // Explicitly deny client-side access to the mail collection for security.
+    match /mail/{docId} {
+      allow read, write: if false;
     }
   }
 }
