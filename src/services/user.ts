@@ -125,8 +125,8 @@ export async function verifyUserEmail(userId: string, emailType: 'primary' | 'op
 }
 
 // This function updates our DB when Firebase Auth confirms verification
-export async function markEmailAsVerified(userId: string): Promise<void> {
-    if (!userId) return;
+export async function markEmailAsVerified(userId: string): Promise<User | null> {
+    if (!userId) return null;
     const userDocRef = doc(db, "users", userId);
     const userDoc = await getDoc(userDocRef);
     if(userDoc.exists() && !userDoc.data().emailPrimaryVerified) {
@@ -134,7 +134,10 @@ export async function markEmailAsVerified(userId: string): Promise<void> {
             emailPrimaryVerified: true,
             updatedAt: serverTimestamp()
         });
+        const updatedDoc = await getDoc(userDocRef);
+        return updatedDoc.data() as User;
     }
+    return userDoc.exists() ? userDoc.data() as User : null;
 }
 
 

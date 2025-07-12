@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { sendEmailVerification, User as FirebaseUser } from "firebase/auth";
 import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, verifyUserEmail, markEmailAsVerified } from "@/services/user";
+import { sendOtp, verifyOtp } from "@/services/otp";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -40,10 +41,19 @@ export default function AccountPage() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
+        // Always get a fresh copy of the user on initial load
+        await user.reload(); 
         setFirebaseUser(user);
         const fetchedUser = await getUserById(user.uid);
         if (fetchedUser) {
-            setCampusUser(fetchedUser);
+            // Sync our DB with the auth state if needed
+            if (user.emailVerified && !fetchedUser.emailPrimaryVerified) {
+                await markEmailAsVerified(user.uid);
+                const updatedUser = await getUserById(user.uid);
+                setCampusUser(updatedUser);
+            } else {
+                setCampusUser(fetchedUser);
+            }
             setOptionalEmailInput(fetchedUser.emailOptional || "");
             setIsEditingOptionalEmail(!fetchedUser.emailOptional);
         }
@@ -61,12 +71,18 @@ export default function AccountPage() {
     const user = auth.currentUser;
     if (user) {
       await user.reload();
-      setFirebaseUser({ ...user }); // Trigger re-render
-      const fetchedUser = await getUserById(user.uid);
-       if (fetchedUser) {
-         await markEmailAsVerified(user.uid);
-         setCampusUser(fetchedUser);
-       }
+      const freshFirebaseUser = auth.currentUser; // get the reloaded user object
+      setFirebaseUser(freshFirebaseUser); 
+
+      if (freshFirebaseUser?.emailVerified) {
+         const updatedCampusUser = await markEmailAsVerified(user.uid);
+         if (updatedCampusUser) {
+           setCampusUser(updatedCampusUser);
+           toast({ title: "Success", description: "Your primary email has been verified." });
+         }
+      } else {
+        toast({ title: "Not Verified", description: "Your primary email is still not verified. Please check your inbox for the verification link." });
+      }
     }
   }
 
@@ -76,7 +92,7 @@ export default function AccountPage() {
       await sendEmailVerification(firebaseUser);
       toast({
         title: "Verification Email Sent",
-        description: `A verification link has been sent to ${firebaseUser.email}. Please check your inbox and click the link to verify. Then, refresh this page.`,
+        description: `A verification link has been sent to ${firebaseUser.email}. Please check your inbox and click the link to verify. Then, click 'Refresh Status'.`,
       });
     } catch (error: any) {
       toast({
@@ -109,6 +125,25 @@ export default function AccountPage() {
     }
   };
 
+  const handleSendOtp = async () => {
+    if (!campusUser || !campusUser.emailOptional) return;
+    try {
+      await sendOtp(campusUser.emailOptional);
+      setEmailToVerify(campusUser.emailOptional);
+      setIsOtpDialogOpen(true);
+      toast({
+        title: "OTP Sent",
+        description: `An OTP has been sent to ${campusUser.emailOptional}. (Hint: For this demo, use 123456)`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send OTP.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!firebaseUser || deleteConfirmationInput !== deleteConfirmationText) return;
     setIsDeleting(true);
@@ -134,15 +169,15 @@ export default function AccountPage() {
   const handleVerifyOtp = async () => {
     if (!firebaseUser || !emailToVerify) return;
     
-    // In a real app, you'd call a backend function to verify the OTP.
-    // Here, we'll just simulate it.
-    if (otpInput === "123456") { // Dummy OTP
+    const isCorrect = await verifyOtp(emailToVerify, otpInput);
+
+    if (isCorrect) {
         try {
             await verifyUserEmail(firebaseUser.uid, 'optional');
             setCampusUser(prev => prev ? { ...prev, emailOptionalVerified: true } : null);
             toast({ title: "Success!", description: `${emailToVerify} has been verified.` });
         } catch (error) {
-            toast({ title: "Error", description: "Could not update verification status.", variant: "destructive" });
+            toast({ title: "Error", description: "Could not update verification status in database.", variant: "destructive" });
         }
     } else {
         toast({ title: "Invalid OTP", description: "The OTP you entered is incorrect.", variant: "destructive" });
@@ -177,10 +212,11 @@ export default function AccountPage() {
                 <div className="flex items-center gap-4">
                     <Input id="primary-email" type="email" value={campusUser.emailPrimary} disabled />
                     {!primaryEmailVerified ? (
-                        <Button variant="outline" onClick={handleSendVerificationLink}>Send Link</Button>
-                    ) : (
-                         <Button variant="ghost" onClick={handleRefreshUser}>Refresh Status</Button>
-                    )}
+                        <>
+                          <Button variant="outline" onClick={handleSendVerificationLink}>Send Link</Button>
+                          <Button variant="ghost" onClick={handleRefreshUser}>Refresh Status</Button>
+                        </>
+                    ) : null}
                 </div>
                  <Badge variant={primaryEmailVerified ? "default" : "destructive"} className={primaryEmailVerified ? "bg-green-600/80" : ""}>
                     {primaryEmailVerified ? "Verified" : "Not Verified"}
@@ -200,13 +236,21 @@ export default function AccountPage() {
                         <Button onClick={handleSaveOptionalEmail} disabled={isSaving}>
                             {isSaving ? "Saving..." : "Save"}
                         </Button>
+                        <Button variant="outline" onClick={() => setIsEditingOptionalEmail(false)}>Cancel</Button>
                     </div>
                 ) : (
                     <div className="flex items-center gap-4">
                         <Input id="optional-email-display" type="email" value={campusUser.emailOptional || ""} disabled />
-                        <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
-                        {!campusUser.emailOptionalVerified && campusUser.emailOptional && (
-                            <Button onClick={() => {setEmailToVerify(campusUser.emailOptional!); setIsOtpDialogOpen(true)}}>Verify</Button>
+                        {campusUser.emailOptional && (
+                          <>
+                            <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
+                            {!campusUser.emailOptionalVerified && (
+                                <Button onClick={handleSendOtp}>Verify</Button>
+                            )}
+                          </>
+                        )}
+                        {!campusUser.emailOptional && (
+                           <Button onClick={() => setIsEditingOptionalEmail(true)}>Add Email</Button>
                         )}
                     </div>
                 )}
@@ -292,4 +336,3 @@ export default function AccountPage() {
     </div>
   );
 }
-
