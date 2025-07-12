@@ -85,25 +85,14 @@ export default function AccountPage() {
   const handleSendOtp = async () => {
     if (!campusUser || !campusUser.emailOptional) return;
     try {
-      const simulatedOtp = await sendOtp(campusUser.emailOptional, campusUser.role);
+      await sendOtp(campusUser.emailOptional, campusUser.role);
       setEmailToVerify(campusUser.emailOptional);
       setIsOtpDialogOpen(true);
-
-      if (simulatedOtp) {
-        // Fallback: Email sending failed, show OTP in toast for local dev
-         toast({
-          title: "Email Failed (Simulation)",
-          description: `Your OTP for ${campusUser.emailOptional} is ${simulatedOtp}.`,
-        });
-      } else {
-        // Success: Email sent
-         toast({
-          title: "OTP Sent",
-          description: `An OTP has been sent to ${campusUser.emailOptional}. Please check your inbox.`,
-        });
-      }
+      toast({
+        title: "OTP Sent",
+        description: `An OTP has been sent to ${campusUser.emailOptional}. Please check your inbox.`,
+      });
     } catch (error: any) {
-      // This catch block might not be hit if the service handles it, but it's good practice.
       toast({
         title: "Failed to Send OTP",
         description: error.message || "Could not send verification email.",

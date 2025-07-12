@@ -9,16 +9,15 @@ const otpStore: Map<string, { code: string; expires: number }> = new Map();
 const ADMIN_OTP = "123456";
 
 /**
- * Generates an OTP and attempts to send it via the "Trigger Email" extension.
- * If sending the email fails (e.g., due to local setup or extension issues),
- * it returns the OTP so it can be displayed in a toast for local development.
+ * Generates an OTP and triggers the "Trigger Email" extension to send it.
+ * This function will throw an error if it fails to write to Firestore.
  * 
  * @param email The email address to send the OTP to.
  * @param role The role of the user ('admin' or 'user').
- * @returns A promise that resolves to the generated OTP, or null if an error occurred that wasn't handled.
- * @throws Will throw an error if writing to Firestore fails and is not caught.
+ * @returns A promise that resolves when the email document has been created.
+ * @throws Will throw an error if writing to Firestore fails.
  */
-export async function sendOtp(email: string, role: User['role']): Promise<string | null> {
+export async function sendOtp(email: string, role: User['role']): Promise<void> {
   const expires = Date.now() + 15 * 60 * 1000; // 15 minutes from now
   let code: string;
 
@@ -55,12 +54,10 @@ export async function sendOtp(email: string, role: User['role']): Promise<string
       },
       createdAt: serverTimestamp(),
     });
-    // If email is sent successfully, return null to indicate no simulation is needed.
-    return null;
   } catch (error) {
-    console.error("Could not send verification email, falling back to simulation. Error:", error);
-    // If email sending fails, return the code so the frontend can display it for local testing.
-    return code;
+    console.error("Error triggering send email extension:", error);
+    // Let the error propagate so the frontend can handle it.
+    throw new Error("Could not send verification email. Please ensure the Trigger Email extension is configured correctly.");
   }
 }
 
