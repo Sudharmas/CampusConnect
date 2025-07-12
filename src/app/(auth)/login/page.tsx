@@ -15,27 +15,28 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
+import { EyeOpenIcon } from '@/components/icons/eye-open';
+import { EyeClosedIcon } from '@/components/icons/eye-closed';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { toast } = useToast();
   const [email, setEmail] = useState('user@campus.edu');
   const [password, setPassword] = useState('password');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
     } catch (error: any) {
-      toast({
-        title: 'Login Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
+      // Set a generic error message for security
+      setError('Invalid email or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -61,21 +62,42 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
+              className={cn(error && "border-destructive animate-shake")}
             />
           </div>
           <div className="grid gap-2">
             <div className="flex items-center">
               <Label htmlFor="password">Password</Label>
             </div>
-            <Input 
-              id="password" 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                className={cn("pr-10", error && "border-destructive animate-shake")}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOpenIcon className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <EyeClosedIcon className="h-5 w-5 text-muted-foreground" />
+                )}
+              </button>
+            </div>
           </div>
+
+          {error && (
+            <p className="text-sm text-destructive animate-shake">{error}</p>
+          )}
+
           <Button type="submit" className="w-full button-glow" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </Button>

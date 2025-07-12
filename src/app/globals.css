@@ -82,6 +82,9 @@ body {
   .button-glow {
     @apply hover:box-glow transition-all duration-300;
   }
+  .animate-shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  }
 }
 
 @keyframes spin-3d {
@@ -95,4 +98,45 @@ body {
 
 .animate-spin-3d {
   animation: spin-3d 5s linear infinite;
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+.eye-open-animation {
+  animation: eye-open 0.3s ease-in-out forwards;
+}
+
+.eye-close-animation {
+  animation: eye-close 0.3s ease-in-out forwards;
+}
+
+@keyframes eye-open {
+  from {
+    transform: scaleY(0.1);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes eye-close {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.1);
+  }
 }
