@@ -131,9 +131,11 @@ export default function AccountPage() {
       await sendOtp(campusUser.emailOptional, campusUser.role);
       setEmailToVerify(campusUser.emailOptional);
       setIsOtpDialogOpen(true);
+      
       const toastDescription = campusUser.role === 'admin' 
         ? `An OTP has been sent to ${campusUser.emailOptional}. (Hint: For this demo, use 123456)`
         : `An OTP has been sent to ${campusUser.emailOptional}. Check your inbox for the code.`;
+
       toast({
         title: "OTP Sent",
         description: toastDescription
