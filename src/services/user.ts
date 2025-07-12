@@ -1,3 +1,4 @@
+
 import { db } from "@/lib/firebase";
 import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -13,7 +14,7 @@ export interface User {
   emailPrimary: string;
   emailPrimaryVerified: boolean;
   emailOptional?: string;
-  emailOptionalVerified?: boolean;
+  emailOptionalVerified: boolean; // Changed to non-optional
   branch: string;
   interests?: string[];
   skills?: string[];
@@ -105,9 +106,37 @@ export async function updateUserOptionalEmail(userId: string, email: string): Pr
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, {
         emailOptional: email,
+        emailOptionalVerified: false, // Reset verification status on change
         updatedAt: serverTimestamp(),
     });
 }
+
+export async function verifyUserEmail(userId: string, emailType: 'primary' | 'optional'): Promise<void> {
+    if (!userId) {
+        throw new Error("User ID is required.");
+    }
+    const userDocRef = doc(db, "users", userId);
+    const fieldToUpdate = emailType === 'primary' ? 'emailPrimaryVerified' : 'emailOptionalVerified';
+    
+    await updateDoc(userDocRef, {
+        [fieldToUpdate]: true,
+        updatedAt: serverTimestamp(),
+    });
+}
+
+// This function updates our DB when Firebase Auth confirms verification
+export async function markEmailAsVerified(userId: string): Promise<void> {
+    if (!userId) return;
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+    if(userDoc.exists() && !userDoc.data().emailPrimaryVerified) {
+        await updateDoc(userDocRef, {
+            emailPrimaryVerified: true,
+            updatedAt: serverTimestamp()
+        });
+    }
+}
+
 
 export async function deleteUserAccount(userId: string): Promise<void> {
     if (!userId) {

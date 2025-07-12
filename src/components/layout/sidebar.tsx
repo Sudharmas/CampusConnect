@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -18,43 +19,52 @@ import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
-import { getUserById } from "@/services/user";
+import { getUserById, User as CampusUser } from "@/services/user";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { User as FirebaseUser } from "firebase/auth";
+
+interface UserProfile {
+  fullName: string;
+  email: string;
+  profilePhotoURL?: string;
+  isVerified: boolean;
+}
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
-  const [userProfile, setUserProfile] = useState<{ fullName: string, email: string, profilePhotoURL?: string } | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        // Fetch user data from the top-level 'users' collection
-        const userDoc = await getUserById(user.uid);
-        if (userDoc) {
-          setUserProfile({
-              fullName: `${userDoc.firstName} ${userDoc.lastName || ''}`.trim(),
-              email: userDoc.emailPrimary,
-              profilePhotoURL: userDoc.profilePhotoURL
-          });
-        } else {
-            console.log("User document not found in the users collection.");
-        }
+    const fetchUserData = async (firebaseUser: FirebaseUser) => {
+      const campusUser: CampusUser | null = await getUserById(firebaseUser.uid);
+      if (campusUser) {
+        // A user is considered verified if both their primary AND optional (if it exists) emails are verified.
+        const isPrimaryVerified = firebaseUser.emailVerified && campusUser.emailPrimaryVerified;
+        const isOptionalVerified = campusUser.emailOptional ? campusUser.emailOptionalVerified : true;
+
+        setUserProfile({
+            fullName: `${campusUser.firstName} ${campusUser.lastName || ''}`.trim(),
+            email: campusUser.emailPrimary,
+            profilePhotoURL: campusUser.profilePhotoURL,
+            isVerified: isPrimaryVerified && isOptionalVerified,
+        });
+      } else {
+          console.log("User document not found in the users collection.");
       }
     };
     
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
-        fetchUserData();
+        fetchUserData(user);
       } else {
         setUserProfile(null);
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [pathname]); // Re-fetch on route change to update verification status
 
   const navItems = [
     { href: "/dashboard", icon: Home, label: "Dashboard" },
@@ -112,7 +122,7 @@ export function AppSidebar() {
                 {navItems.map((item) => (
                     <SidebarMenuItem key={item.href}>
                         <Link href={item.href}>
-                            <SidebarMenuButton isActive={pathname === item.href} className="gap-3">
+                            <SidebarMenuButton isActive={pathname.startsWith(item.href)} className="gap-3">
                                 <item.icon className="h-5 w-5 text-primary text-glow" />
                                 <span>{item.label}</span>
                             </SidebarMenuButton>
@@ -124,7 +134,7 @@ export function AppSidebar() {
         <SidebarFooter className="p-4 border-t border-border">
           <Popover>
             <PopoverTrigger asChild>
-              <button className="flex items-center gap-3 w-full text-left rounded-md p-2 hover:bg-muted transition-colors">
+              <button className="relative flex items-center gap-3 w-full text-left rounded-md p-2 hover:bg-muted transition-colors">
                   <Avatar>
                       <AvatarImage src={userProfile?.profilePhotoURL || "https://placehold.co/40x40"} alt="User" />
                       <AvatarFallback>{userProfile?.fullName ? userProfile.fullName.charAt(0) : 'U'}</AvatarFallback>
@@ -133,6 +143,9 @@ export function AppSidebar() {
                       <p className="font-semibold text-sm truncate">{userProfile?.fullName || 'User Name'}</p>
                       <p className="text-xs text-muted-foreground truncate">{userProfile?.email || 'user@campus.edu'}</p>
                   </div>
+                  {userProfile && !userProfile.isVerified && (
+                     <div className="absolute bottom-1 left-1 h-3 w-3 rounded-full bg-green-500 ring-2 ring-background" />
+                  )}
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-56 mb-2" side="top" align="start">

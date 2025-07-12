@@ -1,4 +1,4 @@
-// This file is intentionally left blank. It will be created in a future step.
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,28 +10,43 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { sendEmailVerification, User as FirebaseUser } from "firebase/auth";
-import { getUserById, updateUserOptionalEmail, deleteUserAccount, User } from "@/services/user";
+import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, verifyUserEmail, markEmailAsVerified } from "@/services/user";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 export default function AccountPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [campusUser, setCampusUser] = useState<User | null>(null);
-  const [optionalEmail, setOptionalEmail] = useState("");
+  
+  const [isEditingOptionalEmail, setIsEditingOptionalEmail] = useState(false);
+  const [optionalEmailInput, setOptionalEmailInput] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = useState("");
+  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
+  const [otpInput, setOtpInput] = useState("");
+  const [emailToVerify, setEmailToVerify] = useState<string | null>(null);
+
+  const deleteConfirmationText = `delete ${campusUser?.firstName || ""}`;
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setFirebaseUser(user);
         const fetchedUser = await getUserById(user.uid);
-        setCampusUser(fetchedUser);
-        setOptionalEmail(fetchedUser?.emailOptional || "");
+        if (fetchedUser) {
+            setCampusUser(fetchedUser);
+            setOptionalEmailInput(fetchedUser.emailOptional || "");
+            setIsEditingOptionalEmail(!fetchedUser.emailOptional);
+        }
       } else {
         setFirebaseUser(null);
         setCampusUser(null);
@@ -41,13 +56,27 @@ export default function AccountPage() {
     });
     return () => unsubscribe();
   }, [router]);
+  
+  const handleRefreshUser = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      await user.reload();
+      setFirebaseUser({ ...user }); // Trigger re-render
+      const fetchedUser = await getUserById(user.uid);
+       if (fetchedUser) {
+         await markEmailAsVerified(user.uid);
+         setCampusUser(fetchedUser);
+       }
+    }
+  }
 
-  const handleSendVerificationEmail = async (user: FirebaseUser) => {
+  const handleSendVerificationLink = async () => {
+    if (!firebaseUser) return;
     try {
-      await sendEmailVerification(user);
+      await sendEmailVerification(firebaseUser);
       toast({
         title: "Verification Email Sent",
-        description: `A verification link has been sent to ${user.email}. Please check your inbox.`,
+        description: `A verification link has been sent to ${firebaseUser.email}. Please check your inbox and click the link to verify. Then, refresh this page.`,
       });
     } catch (error: any) {
       toast({
@@ -58,13 +87,15 @@ export default function AccountPage() {
     }
   };
   
-  const handleUpdateOptionalEmail = async () => {
+  const handleSaveOptionalEmail = async () => {
     if (!firebaseUser) return;
     setIsSaving(true);
     try {
-        await updateUserOptionalEmail(firebaseUser.uid, optionalEmail);
+        await updateUserOptionalEmail(firebaseUser.uid, optionalEmailInput);
+        setCampusUser(prev => prev ? { ...prev, emailOptional: optionalEmailInput, emailOptionalVerified: false } : null);
+        setIsEditingOptionalEmail(false);
         toast({
-            title: "Optional Email Updated",
+            title: "Optional Email Saved",
             description: "Your optional email has been saved.",
         });
     } catch (error: any) {
@@ -79,7 +110,7 @@ export default function AccountPage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!firebaseUser) return;
+    if (!firebaseUser || deleteConfirmationInput !== deleteConfirmationText) return;
     setIsDeleting(true);
     try {
         await deleteUserAccount(firebaseUser.uid);
@@ -99,6 +130,26 @@ export default function AccountPage() {
         setIsDeleting(false);
     }
   };
+  
+  const handleVerifyOtp = async () => {
+    if (!firebaseUser || !emailToVerify) return;
+    
+    // In a real app, you'd call a backend function to verify the OTP.
+    // Here, we'll just simulate it.
+    if (otpInput === "123456") { // Dummy OTP
+        try {
+            await verifyUserEmail(firebaseUser.uid, 'optional');
+            setCampusUser(prev => prev ? { ...prev, emailOptionalVerified: true } : null);
+            toast({ title: "Success!", description: `${emailToVerify} has been verified.` });
+        } catch (error) {
+            toast({ title: "Error", description: "Could not update verification status.", variant: "destructive" });
+        }
+    } else {
+        toast({ title: "Invalid OTP", description: "The OTP you entered is incorrect.", variant: "destructive" });
+    }
+    setOtpInput("");
+    setIsOtpDialogOpen(false);
+  }
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><LoadingSpinner /></div>;
@@ -107,6 +158,8 @@ export default function AccountPage() {
   if (!firebaseUser || !campusUser) {
     return <div className="flex justify-center items-center h-full"><p>User not found. Redirecting...</p></div>;
   }
+
+  const primaryEmailVerified = firebaseUser.emailVerified && campusUser.emailPrimaryVerified;
 
   return (
     <div className="container mx-auto">
@@ -123,27 +176,45 @@ export default function AccountPage() {
                 <Label htmlFor="primary-email">Primary Email</Label>
                 <div className="flex items-center gap-4">
                     <Input id="primary-email" type="email" value={campusUser.emailPrimary} disabled />
-                    {!firebaseUser.emailVerified && (
-                        <Button variant="outline" onClick={() => handleSendVerificationEmail(firebaseUser)}>Verify</Button>
+                    {!primaryEmailVerified ? (
+                        <Button variant="outline" onClick={handleSendVerificationLink}>Send Link</Button>
+                    ) : (
+                         <Button variant="ghost" onClick={handleRefreshUser}>Refresh Status</Button>
                     )}
                 </div>
-                 {firebaseUser.emailVerified && <p className="text-sm text-green-400">Verified</p>}
+                 <Badge variant={primaryEmailVerified ? "default" : "destructive"} className={primaryEmailVerified ? "bg-green-600/80" : ""}>
+                    {primaryEmailVerified ? "Verified" : "Not Verified"}
+                </Badge>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="optional-email">Optional Email</Label>
-                <div className="flex items-center gap-4">
-                    <Input 
-                        id="optional-email" 
-                        type="email" 
-                        placeholder="Add a secondary email" 
-                        value={optionalEmail}
-                        onChange={(e) => setOptionalEmail(e.target.value)}
-                    />
-                    <Button onClick={handleUpdateOptionalEmail} disabled={isSaving}>
-                        {isSaving ? "Saving..." : "Save"}
-                    </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">Optional emails are not used for verification or login yet.</p>
+                {isEditingOptionalEmail ? (
+                    <div className="flex items-center gap-4">
+                        <Input 
+                            id="optional-email-input" 
+                            type="email" 
+                            placeholder="Add a secondary email" 
+                            value={optionalEmailInput}
+                            onChange={(e) => setOptionalEmailInput(e.target.value)}
+                        />
+                        <Button onClick={handleSaveOptionalEmail} disabled={isSaving}>
+                            {isSaving ? "Saving..." : "Save"}
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-4">
+                        <Input id="optional-email-display" type="email" value={campusUser.emailOptional || ""} disabled />
+                        <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
+                        {!campusUser.emailOptionalVerified && campusUser.emailOptional && (
+                            <Button onClick={() => {setEmailToVerify(campusUser.emailOptional!); setIsOtpDialogOpen(true)}}>Verify</Button>
+                        )}
+                    </div>
+                )}
+                 {campusUser.emailOptional && (
+                     <Badge variant={campusUser.emailOptionalVerified ? "default" : "destructive"} className={campusUser.emailOptionalVerified ? "bg-green-600/80" : ""}>
+                        {campusUser.emailOptionalVerified ? "Verified" : "Not Verified"}
+                    </Badge>
+                 )}
             </div>
           </div>
           
@@ -167,12 +238,23 @@ export default function AccountPage() {
                             <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                                This action cannot be undone. To confirm, please type{" "}
+                                <strong className="text-foreground">{deleteConfirmationText}</strong> in the box below.
                             </AlertDialogDescription>
                             </AlertDialogHeader>
+                            <Input 
+                                value={deleteConfirmationInput}
+                                onChange={(e) => setDeleteConfirmationInput(e.target.value)}
+                                placeholder={`Type '${deleteConfirmationText}' to confirm`}
+                                className="mt-2"
+                            />
                             <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive hover:bg-destructive/90">
+                            <AlertDialogCancel onClick={() => setDeleteConfirmationInput("")}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                                onClick={handleDeleteAccount} 
+                                className="bg-destructive hover:bg-destructive/90"
+                                disabled={deleteConfirmationInput !== deleteConfirmationText}
+                            >
                                 Yes, delete my account
                             </AlertDialogAction>
                             </AlertDialogFooter>
@@ -183,6 +265,31 @@ export default function AccountPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Verify Your Email</DialogTitle>
+                  <DialogDescription>
+                      An OTP has been sent to {emailToVerify}. Please enter it below.
+                      The code is valid for 15 minutes. (Hint: Use 123456 for this demo).
+                  </DialogDescription>
+              </DialogHeader>
+              <Input
+                value={otpInput}
+                onChange={(e) => setOtpInput(e.target.value)}
+                maxLength={6}
+                placeholder="Enter 6-digit OTP"
+              />
+              <DialogFooter>
+                  <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button onClick={handleVerifyOtp}>Verify</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
