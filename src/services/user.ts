@@ -155,22 +155,23 @@ export async function markEmailAsVerified(userId: string): Promise<User | null> 
     const userDocRef = doc(db, "users", userId);
     const userDoc = await getDoc(userDocRef);
     
-    let needsUpdate = false;
-    const updateData: any = { updatedAt: serverTimestamp() };
-
-    const data = userDoc.data();
-    if (data && !data.emailPrimaryVerified) {
-        updateData.emailPrimaryVerified = true;
-        needsUpdate = true;
+    // This function should only be called after user.reload()
+    if (userDoc.exists()) {
+        const data = userDoc.data() as User;
+        // Check if the DB state is out of sync with Auth state
+        if (!data.emailPrimaryVerified) {
+             await updateDoc(userDocRef, { 
+                emailPrimaryVerified: true,
+                updatedAt: serverTimestamp()
+             });
+             // Return the updated user data
+             const updatedDoc = await getDoc(userDocRef);
+             return updatedDoc.data() as User;
+        }
+        return data; // Return current data if already verified
     }
 
-    if (needsUpdate) {
-        await updateDoc(userDocRef, updateData);
-        const updatedDoc = await getDoc(userDocRef);
-        return updatedDoc.data() as User;
-    }
-
-    return userDoc.exists() ? data as User : null;
+    return null;
 }
 
 export async function markOptionalEmailAsVerified(userId: string): Promise<void> {

@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { User as FirebaseUser, sendEmailVerification } from "firebase/auth";
-import { updateUserOptionalEmail, deleteUserAccount, User, markEmailAsVerified, markOptionalEmailAsVerified } from "@/services/user";
+import { updateUserOptionalEmail, deleteUserAccount, User, markEmailAsVerified, markOptionalEmailAsVerified, getUserById } from "@/services/user";
 import { getCollegeById } from "@/services/college";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -39,7 +39,15 @@ export default function AccountPage() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         await user.reload(); 
-        const updatedUser = await markEmailAsVerified(user.uid);
+        
+        let updatedUser: User | null = null;
+        try {
+            updatedUser = await markEmailAsVerified(user.uid);
+        } catch (error) {
+            console.error("Permission error checking primary email verification, falling back:", error);
+            updatedUser = await getUserById(user.uid);
+        }
+
         setFirebaseUser(user);
         if (updatedUser) {
             setCampusUser(updatedUser);
