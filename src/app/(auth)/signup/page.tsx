@@ -61,9 +61,13 @@ export default function SignupPage() {
     resolver: async (data, context, options) => {
       const result = await zodResolver(signupFormSchema)(data, context, options);
 
-      if (result.errors.collegeID || result.errors.email || result.errors.role) {
-        return result;
-      }
+      if (
+  "collegeID" in result.errors ||
+  "email" in result.errors ||
+  "role" in result.errors
+) {
+  return result;
+}
 
       const college = await getCollegeById(data.collegeID);
       if (!college) {
