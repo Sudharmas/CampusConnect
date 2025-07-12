@@ -1,6 +1,6 @@
 
 "use client";
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -8,10 +8,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageCircle, Heart, Share2, ImageIcon, Video, Music, UserPlus, X } from 'lucide-react';
 import Image from "next/image";
 import { useToast } from '@/hooks/use-toast';
-import { addConnection } from '@/services/user';
+import { addConnection, getUserById, User } from '@/services/user';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
-import { Progress } from './ui/progress';
 
 const initialPosts = [
   {
@@ -58,9 +57,23 @@ export function CampusFeed() {
   const [posts, setPosts] = useState(initialPosts);
   const [newPost, setNewPost] = useState('');
   const { toast } = useToast();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const fetchedUser = await getUserById(user.uid);
+        setCurrentUser(fetchedUser);
+      } else {
+        setCurrentUser(null);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -93,13 +106,16 @@ export function CampusFeed() {
   const handlePost = async () => {
     if (!newPost.trim() && !filePreview) return;
 
+    const authorName = currentUser ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : 'User';
+    const authorHandle = currentUser ? `@${currentUser.firstName.toLowerCase()}` : '@user';
+
     // This is a local-only post for testing. It will not be saved to a database.
     const post = {
         id: Date.now(), // Use timestamp for unique key in local state
         authorId: auth.currentUser?.uid || "user1",
-        author: 'User Name (local)', // In a real app, get this from user profile
+        author: authorName,
         avatar: 'https://placehold.co/40x40.png',
-        handle: '@username',
+        handle: authorHandle,
         time: 'Just now',
         content: newPost,
         image: filePreview, // Use the local blob URL
@@ -119,7 +135,7 @@ export function CampusFeed() {
 
     toast({
         title: "Post Created (Local)",
-        description: "Your post with the image has been added to the feed for this session.",
+        description: "Your post has been added to the feed for this session.",
     });
   };
 
