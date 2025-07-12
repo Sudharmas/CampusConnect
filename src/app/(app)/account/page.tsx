@@ -128,20 +128,18 @@ export default function AccountPage() {
   const handleSendOtp = async () => {
     if (!campusUser || !campusUser.emailOptional) return;
     try {
-      const otp = await sendOtp(campusUser.emailOptional, campusUser.role);
+      await sendOtp(campusUser.emailOptional, campusUser.role);
       setEmailToVerify(campusUser.emailOptional);
       setIsOtpDialogOpen(true);
       
-      const toastDescription = `An OTP has been sent to ${campusUser.emailOptional}. (Hint for testing: ${otp})`;
-
       toast({
-        title: "OTP Sent (Simulation)",
-        description: toastDescription
+        title: "OTP Sent",
+        description: `An OTP has been sent to ${campusUser.emailOptional}. Please check your inbox.`
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to send OTP.",
+        description: error.message || "Failed to send OTP.",
         variant: "destructive"
       });
     }

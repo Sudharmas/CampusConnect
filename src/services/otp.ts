@@ -14,7 +14,7 @@ const ADMIN_OTP = "123456";
  * 
  * @param email The email address to send the OTP to.
  * @param role The role of the user ('admin' or 'user').
- * @returns The generated OTP for display/testing purposes.
+ * @returns The generated OTP for display/testing purposes (will be removed in production).
  */
 export async function sendOtp(email: string, role: User['role']): Promise<string> {
   const expires = Date.now() + 15 * 60 * 1000; // 15 minutes from now
