@@ -17,6 +17,8 @@ export interface User {
 
   branch: string;
   interests: string[];
+  skills: string[];
+  bio: string;
   profilePhotoURL: string;
   createdAt: any; // serverTimestamp() is not a Date object
   updatedAt: any; // serverTimestamp() is not a Date object
@@ -47,7 +49,6 @@ export async function createUser({
 }: CreateUserParams): Promise<void> {
   const userDocRef = doc(db, "users", id);
 
-  // Set document with all fields as per the schema
   await setDoc(userDocRef, {
     id,
     role,
@@ -60,9 +61,11 @@ export async function createUser({
     emailPrimaryVerified: false,
     emailOptional: "",
     emailOptionalVerified: false,
-    // passwordHash is handled by Firebase Auth and should not be stored here.
     branch,
     interests: [],
+    skills: [],
+    bio: "",
+
     profilePhotoURL: "",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),

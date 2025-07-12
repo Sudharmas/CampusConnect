@@ -22,17 +22,13 @@ export async function addCollege(collegeId: string, collegeData: CollegeData): P
     }
 
     try {
-        // Define the path to the subcollection
-        const collegeDocRef = doc(db, 'colleges', 'college-data', 'collegedetails', collegeId.toUpperCase());
+        const collegeDocRef = doc(db, 'colleges', 'college-data', 'collegedetails', collegeId);
 
-        // Set the college document in the subcollection
         await setDoc(collegeDocRef, {
             ...collegeData,
-            collegeID: collegeId.toUpperCase(), // Storing the ID within the document is good practice
+            collegeID: collegeId.toUpperCase(), 
             updatedAt: serverTimestamp(),
-        }, { merge: true }); // Use merge to avoid overwriting existing data if just updating
-
-        console.log(`College '${collegeId}' successfully added/updated.`);
+        }, { merge: true });
 
     } catch (error) {
         console.error("Error adding college: ", error);
