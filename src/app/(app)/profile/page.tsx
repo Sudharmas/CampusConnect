@@ -13,12 +13,18 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [userData, setUserData] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const fetchedUser = await getUserById(user.uid);
         setUserData(fetchedUser);
+        // Check for a locally stored avatar
+        const savedAvatar = localStorage.getItem(`avatar_${user.uid}`);
+        if (savedAvatar) {
+          setLocalAvatar(savedAvatar);
+        }
       } else {
         setUserData(null);
       }
@@ -27,6 +33,14 @@ export default function ProfilePage() {
 
     return () => unsubscribe();
   }, []);
+  
+  const handleSave = () => {
+    setIsEditing(false);
+    // Optionally re-fetch data to confirm saves
+    if(auth.currentUser) {
+        getUserById(auth.currentUser.uid).then(setUserData);
+    }
+  }
 
   const handleEditToggle = () => setIsEditing(!isEditing);
 
@@ -54,8 +68,10 @@ export default function ProfilePage() {
             <ProfileForm 
               initialData={userData} 
               isEditing={isEditing} 
-              onSave={() => setIsEditing(false)} 
+              onSave={handleSave} 
               onCancel={() => setIsEditing(false)}
+              localAvatar={localAvatar}
+              setLocalAvatar={setLocalAvatar}
             />
           ) : (
             <p>Please log in to view your profile.</p>
