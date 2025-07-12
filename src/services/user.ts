@@ -1,24 +1,24 @@
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc } from "firebase/firestore";
 
 // User data is now stored in a top-level 'users' collection.
 export interface User {
   id: string;
   role: "user" | "admin";
   firstName: string;
-  lastName: string;
+  lastName?: string;
   USN: string;
   collegeName: string;
   collegeID: string;
   emailPrimary: string;
   emailPrimaryVerified: boolean;
-  emailOptional: string;
-  emailOptionalVerified: boolean;
+  emailOptional?: string;
+  emailOptionalVerified?: boolean;
   branch: string;
-  interests: string[];
-  skills: string[];
-  bio: string;
-  profilePhotoURL: string;
+  interests?: string[];
+  skills?: string[];
+  bio?: string;
+  profilePhotoURL?: string;
   createdAt: any; // serverTimestamp() is not a Date object
   updatedAt: any; // serverTimestamp() is not a Date object
 }
@@ -83,6 +83,21 @@ export async function getUserById(userId: string): Promise<User | null> {
         return null;
     }
 }
+
+export type UserUpdatePayload = Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'interests' | 'skills' | 'profilePhotoURL'>>;
+
+export async function updateUser(userId: string, data: UserUpdatePayload): Promise<void> {
+    if (!userId) {
+        throw new Error("User ID is required to update a profile.");
+    }
+    const userDocRef = doc(db, "users", userId);
+
+    await updateDoc(userDocRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+    });
+}
+
 
 // This is a simplified representation of a user profile for the AI
 interface UserProfile {
