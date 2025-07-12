@@ -108,10 +108,11 @@ export default function LoginPage() {
           {error && (
             <p className="text-sm text-destructive animate-shake">{error}</p>
           )}
-
-          <Button type="submit" className="w-full button-glow" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
-          </Button>
+          <div className="login-button-container">
+             <Button type="submit" className="w-full login-button-inner" disabled={isLoading}>
+                {isLoading ? 'Logging in...' : 'Login'}
+            </Button>
+          </div>
         </form>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{' '}

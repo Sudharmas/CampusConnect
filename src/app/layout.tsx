@@ -2,6 +2,8 @@ import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import './premium-button.css';
+import './signup-button.css';
+import './login-button.css';
 
 export const metadata: Metadata = {
   title: 'CampusConnect',

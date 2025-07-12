@@ -32,7 +32,7 @@ export function LandingPage() {
           </svg>
           <span className="ml-2 text-lg font-bold font-headline text-glow">CampusConnect</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
+        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
           <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Features
           </Link>
@@ -40,15 +40,17 @@ export function LandingPage() {
             Alumni
           </Link>
           <Link href="/login" prefetch={false}>
-            <Button variant="outline" className="button-glow">
-              Login
-            </Button>
+             <div className="login-button-container-nav">
+                <Button variant="outline" className="login-button-inner-nav border-none shadow-none text-foreground">
+                  Login
+                </Button>
+              </div>
           </Link>
-          <Link href="/signup" prefetch={false}>
-             <Button>
+          <Link href="/signup" prefetch={false} className="signup-button">
+            <span className="signup-button-span">
               Sign Up
               <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            </span>
           </Link>
         </nav>
       </header>
@@ -62,14 +64,15 @@ export function LandingPage() {
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                 The ultimate platform for students and alumni to build the future, together. Find partners, launch projects, and make your mark.
               </p>
-              <div className="space-x-4">
+              <div className="space-x-4 inline-block">
                 <Link
                   href="/signup"
                   prefetch={false}
+                  className="signup-button text-lg"
                 >
-                  <Button size="lg" className="button-glow bg-primary text-primary-foreground">
+                  <span className="signup-button-span">
                     Get Started
-                  </Button>
+                  </span>
                 </Link>
               </div>
             </div>

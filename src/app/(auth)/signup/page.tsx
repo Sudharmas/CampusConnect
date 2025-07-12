@@ -339,8 +339,10 @@ export default function SignupPage() {
                         </FormItem>
                     )}
                 />
-                <Button type="submit" className="w-full button-glow" disabled={isSubmitting || isFetchingCollege}>
-                    {isSubmitting ? "Creating Account..." : "Create an account"}
+                <Button type="submit" className="w-full signup-button" disabled={isSubmitting || isFetchingCollege}>
+                    <span className="signup-button-span">
+                      {isSubmitting ? "Creating Account..." : "Create an account"}
+                    </span>
                 </Button>
             </form>
         </Form>
