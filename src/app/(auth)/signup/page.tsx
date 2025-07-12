@@ -90,7 +90,7 @@ export default function SignupPage() {
     mode: "onBlur"
   });
 
-  const { formState: { isSubmitting }, watch, trigger, setError } = form;
+  const { formState: { isSubmitting }, watch, trigger, setError, clearErrors } = form;
   const collegeIDValue = watch('collegeID');
 
   const handleCollegeIdBlur = async () => {
@@ -100,6 +100,7 @@ export default function SignupPage() {
         const fetchedCollege = await getCollegeById(collegeIDValue);
         if (fetchedCollege) {
           setCollege(fetchedCollege);
+          clearErrors("collegeID"); // Clear error on success
           if (form.getValues('role') === 'admin') {
             trigger("email");
           }
@@ -112,17 +113,18 @@ export default function SignupPage() {
 
 
   const handleSignup = async (values: SignupFormValues) => {
-    const finalCollege = college || await getCollegeById(values.collegeID);
-    if (!finalCollege) {
+    try {
+      // Re-fetch college details on submit to be absolutely sure.
+      const finalCollege = await getCollegeById(values.collegeID);
+      if (!finalCollege) {
          toast({
             title: "Sign up failed",
             description: "Invalid College ID. Please check and try again.",
             variant: "destructive",
         });
         return;
-    }
-
-    try {
+      }
+      
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
       
@@ -132,7 +134,7 @@ export default function SignupPage() {
         firstName: values.firstName,
         lastName: values.lastName,
         USN: values.usn,
-        collegeName: finalCollege.name,
+        collegeName: finalCollege.name, 
         collegeID: values.collegeID,
         emailPrimary: values.email,
         branch: values.branch,
