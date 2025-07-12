@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -27,6 +28,16 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // If it's not an email, assume it's a USN and force uppercase.
+    if (!value.includes('@')) {
+      setIdentifier(value.toUpperCase());
+    } else {
+      setIdentifier(value);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +82,7 @@ export default function LoginPage() {
               placeholder="m@example.com or 1AB23CD001"
               required
               value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              onChange={handleIdentifierChange}
               disabled={isLoading}
               className={cn(error && "border-destructive animate-shake")}
             />

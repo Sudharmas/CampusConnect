@@ -92,7 +92,8 @@ export async function getUserByUsn(usn: string): Promise<User | null> {
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-        return querySnapshot.docs[0].data() as User;
+        const userDoc = querySnapshot.docs[0];
+        return { id: userDoc.id, ...userDoc.data() } as User;
     }
     return null;
 }
