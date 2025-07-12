@@ -1,6 +1,6 @@
 
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc, deleteDoc, limit } from "firebase/firestore";
 
 // User data is now stored in a top-level 'users' collection.
 export interface User {
@@ -55,7 +55,7 @@ export async function createUser({
     role,
     firstName,
     lastName: lastName || "",
-    USN,
+    USN: USN.toUpperCase(),
     collegeName,
     collegeID,
     emailPrimary,
@@ -84,6 +84,36 @@ export async function getUserById(userId: string): Promise<User | null> {
         return null;
     }
 }
+
+export async function getUserByUsn(usn: string): Promise<User | null> {
+    if (!usn) return null;
+    const usersCollectionRef = collection(db, 'users');
+    const q = query(usersCollectionRef, where("USN", "==", usn.toUpperCase()), limit(1));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data() as User;
+    }
+    return null;
+}
+
+export async function checkIfUserExists(email: string, usn: string): Promise<{ emailExists: boolean; usnExists: boolean }> {
+  const usersCollectionRef = collection(db, 'users');
+
+  const emailQuery = query(usersCollectionRef, where("emailPrimary", "==", email), limit(1));
+  const usnQuery = query(usersCollectionRef, where("USN", "==", usn.toUpperCase()), limit(1));
+  
+  const [emailSnapshot, usnSnapshot] = await Promise.all([
+    getDocs(emailQuery),
+    getDocs(usnQuery),
+  ]);
+
+  return {
+    emailExists: !emailSnapshot.empty,
+    usnExists: !usnSnapshot.empty,
+  };
+}
+
 
 export type UserUpdatePayload = Partial<Pick<User, 'firstName' | 'lastName' | 'bio' | 'interests' | 'skills' | 'profilePhotoURL'>>;
 

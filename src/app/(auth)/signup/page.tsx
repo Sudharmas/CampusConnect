@@ -21,9 +21,9 @@ import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getCollegeById, College } from '@/services/college';
-import { createUser } from '@/services/user';
+import { createUser, checkIfUserExists } from '@/services/user';
 
 const signupFormSchema = z.object({
   role: z.enum(["user", "admin"], {
@@ -31,7 +31,7 @@ const signupFormSchema = z.object({
   }),
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   lastName: z.string().optional(),
-  usn: z.string().min(5, "USN must be at least 5 characters."),
+  usn: z.string().min(5, "USN must be at least 5 characters.").transform(v => v.toUpperCase()),
   collegeID: z.string().min(1, "Please enter a college ID."),
   branch: z.string({ required_error: "Please select a branch." }),
   email: z.string().email("Please enter a valid email address."),
@@ -45,6 +45,16 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [college, setCollege] = useState<College | null>(null);
   const [isFetchingCollege, setIsFetchingCollege] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      const timer = setTimeout(() => {
+        router.push('/login');
+      }, 2000); // Redirect after 2 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [shouldRedirect, router]);
 
   const form = useForm<SignupFormValues>({
     resolver: async (data, context, options) => {
@@ -113,6 +123,19 @@ export default function SignupPage() {
 
 
   const handleSignup = async (values: SignupFormValues) => {
+    // 1. Check if user already exists
+    const { emailExists, usnExists } = await checkIfUserExists(values.email, values.usn);
+    if (emailExists || usnExists) {
+      const message = emailExists ? `An account with email ${values.email} already exists.` : `An account with USN ${values.usn} already exists.`;
+      toast({
+        title: "User Already Exists",
+        description: `${message} Redirecting to login...`,
+        variant: "destructive"
+      });
+      setShouldRedirect(true);
+      return;
+    }
+
     try {
       // Re-fetch college details on submit to be absolutely sure.
       const finalCollege = await getCollegeById(values.collegeID);
