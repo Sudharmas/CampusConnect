@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { User as FirebaseUser, sendEmailVerification } from "firebase/auth";
-import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, markEmailAsVerified } from "@/services/user";
+import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, markEmailAsVerified, markOptionalEmailAsVerified } from "@/services/user";
 import { getCollegeById } from "@/services/college";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -29,6 +29,7 @@ export default function AccountPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState("");
   
@@ -126,6 +127,27 @@ export default function AccountPage() {
         setIsDeleting(false);
     }
   };
+
+  const handleVerifyOptionalEmail = async () => {
+    if (!firebaseUser) return;
+    setIsVerifying(true);
+    try {
+      await markOptionalEmailAsVerified(firebaseUser.uid);
+      setCampusUser(prev => prev ? { ...prev, emailOptionalVerified: true } : null);
+      toast({
+        title: "Email Verified",
+        description: "Your optional email has been marked as verified.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to verify optional email.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
   
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><LoadingSpinner /></div>;
@@ -182,6 +204,11 @@ export default function AccountPage() {
                 ) : (
                     <div className="flex items-center gap-4">
                         <Input id="optional-email-display" type="email" value={campusUser.emailOptional || ""} disabled />
+                        {campusUser.emailOptional && !campusUser.emailOptionalVerified && (
+                          <Button onClick={handleVerifyOptionalEmail} disabled={isVerifying}>
+                            {isVerifying ? "Verifying..." : "Verify"}
+                          </Button>
+                        )}
                         {campusUser.emailOptional && (
                           <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
                         )}

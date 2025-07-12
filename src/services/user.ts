@@ -173,6 +173,17 @@ export async function markEmailAsVerified(userId: string): Promise<User | null> 
     return userDoc.exists() ? data as User : null;
 }
 
+export async function markOptionalEmailAsVerified(userId: string): Promise<void> {
+    if (!userId) {
+        throw new Error("User ID is required to verify the email.");
+    }
+    const userDocRef = doc(db, "users", userId);
+    await updateDoc(userDocRef, {
+        emailOptionalVerified: true,
+        updatedAt: serverTimestamp(),
+    });
+}
+
 
 export async function deleteUserAccount(userId: string): Promise<void> {
     if (!userId) {
