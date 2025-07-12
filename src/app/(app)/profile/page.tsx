@@ -1,6 +1,8 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { ProfileForm } from '@/components/profile-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,7 +54,7 @@ export default function ProfilePage() {
             <CardTitle className="font-headline text-3xl text-glow">Your Profile</CardTitle>
             <CardDescription>This is how others will see you on CampusConnect. Make it shine.</CardDescription>
           </div>
-          {!isEditing && (
+          {userData && !isEditing && (
             <Button variant="outline" onClick={handleEditToggle} className="button-glow">
               <Pencil className="mr-2 h-4 w-4" />
               Edit Profile
@@ -74,7 +76,12 @@ export default function ProfilePage() {
               setLocalAvatar={setLocalAvatar}
             />
           ) : (
-            <p>Please log in to view your profile.</p>
+            <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
+              <p className="text-muted-foreground">You must be logged in to view and edit your profile.</p>
+              <Button asChild className="button-glow">
+                <Link href="/login">Login Now</Link>
+              </Button>
+            </div>
           )}
         </CardContent>
       </Card>
