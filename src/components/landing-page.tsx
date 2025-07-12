@@ -37,9 +37,14 @@ export function LandingPage() {
           <Link href="#alumni" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Alumni
           </Link>
-          <Link href="/dashboard" prefetch={false}>
+          <Link href="/login" prefetch={false}>
             <Button variant="outline" className="button-glow">
-              Launch App
+              Login
+            </Button>
+          </Link>
+          <Link href="/signup" prefetch={false}>
+             <Button>
+              Sign Up
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -58,7 +63,7 @@ export function LandingPage() {
               </p>
               <div className="space-x-4">
                 <Link
-                  href="/dashboard"
+                  href="/signup"
                   prefetch={false}
                 >
                   <Button size="lg" className="button-glow bg-primary text-primary-foreground">
