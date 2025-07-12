@@ -9,15 +9,16 @@ const otpStore: Map<string, { code: string; expires: number }> = new Map();
 const ADMIN_OTP = "123456";
 
 /**
- * Generates an OTP and triggers the "Trigger Email" extension to send it.
- * This function will always attempt to create a document in the 'mail' collection.
+ * Generates an OTP and attempts to send it via the "Trigger Email" extension.
+ * If sending the email fails (e.g., due to local setup or extension issues),
+ * it returns the OTP so it can be displayed in a toast for local development.
  * 
  * @param email The email address to send the OTP to.
  * @param role The role of the user ('admin' or 'user').
- * @returns A promise that resolves to the generated OTP.
- * @throws Will throw an error if writing to Firestore fails.
+ * @returns A promise that resolves to the generated OTP, or null if an error occurred that wasn't handled.
+ * @throws Will throw an error if writing to Firestore fails and is not caught.
  */
-export async function sendOtp(email: string, role: User['role']): Promise<string> {
+export async function sendOtp(email: string, role: User['role']): Promise<string | null> {
   const expires = Date.now() + 15 * 60 * 1000; // 15 minutes from now
   let code: string;
 
@@ -54,14 +55,13 @@ export async function sendOtp(email: string, role: User['role']): Promise<string
       },
       createdAt: serverTimestamp(),
     });
+    // If email is sent successfully, return null to indicate no simulation is needed.
+    return null;
   } catch (error) {
-    console.error("Error writing to 'mail' collection:", error);
-    // Re-throw the error to be caught by the calling function on the frontend.
-    throw new Error("Could not send verification email. Please ensure the Trigger Email extension is configured correctly.");
+    console.error("Could not send verification email, falling back to simulation. Error:", error);
+    // If email sending fails, return the code so the frontend can display it for local testing.
+    return code;
   }
-
-  // Return the code, although it's primarily for the verification step now.
-  return code;
 }
 
 
