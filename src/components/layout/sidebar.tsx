@@ -78,9 +78,11 @@ export function AppSidebar() {
                         <p className="text-xs text-muted-foreground truncate">user@campus.edu</p>
                     </div>
                 </Link>
-                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                    <LogOut className="h-5 w-5"/>
-                 </Button>
+                 <Link href="/">
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                        <LogOut className="h-5 w-5"/>
+                    </Button>
+                 </Link>
             </div>
         </SidebarFooter>
     </Sidebar>
