@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -123,13 +124,12 @@ export default function SignupPage() {
 
 
   const handleSignup = async (values: SignupFormValues) => {
-    // 1. Check if user already exists
-    const { emailExists, usnExists } = await checkIfUserExists(values.email, values.usn);
-    if (emailExists || usnExists) {
-      const message = emailExists ? `An account with email ${values.email} already exists.` : `An account with USN ${values.usn} already exists.`;
+    // 1. Check if user with USN already exists
+    const { usnExists } = await checkIfUserExists(values.usn);
+    if (usnExists) {
       toast({
         title: "User Already Exists",
-        description: `${message} Redirecting to login...`,
+        description: `An account with USN ${values.usn} already exists. Redirecting to login...`,
         variant: "destructive"
       });
       setShouldRedirect(true);

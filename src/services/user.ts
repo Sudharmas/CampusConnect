@@ -98,19 +98,13 @@ export async function getUserByUsn(usn: string): Promise<User | null> {
     return null;
 }
 
-export async function checkIfUserExists(email: string, usn: string): Promise<{ emailExists: boolean; usnExists: boolean }> {
+export async function checkIfUserExists(usn: string): Promise<{ usnExists: boolean }> {
   const usersCollectionRef = collection(db, 'users');
-
-  const emailQuery = query(usersCollectionRef, where("emailPrimary", "==", email), limit(1));
-  const usnQuery = query(usersCollectionRef, where("USN", "==", usn.toUpperCase()), limit(1));
   
-  const [emailSnapshot, usnSnapshot] = await Promise.all([
-    getDocs(emailQuery),
-    getDocs(usnQuery),
-  ]);
+  const usnQuery = query(usersCollectionRef, where("USN", "==", usn.toUpperCase()), limit(1));
+  const usnSnapshot = await getDocs(usnQuery);
 
   return {
-    emailExists: !emailSnapshot.empty,
     usnExists: !usnSnapshot.empty,
   };
 }
