@@ -1,7 +1,7 @@
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc, collectionGroup } from "firebase/firestore";
 
-// Corresponds to the `users` collection schema
+// Corresponds to the `users` subcollection schema under a college document
 export interface User {
   id: string;
   role: "user" | "admin";
@@ -47,7 +47,8 @@ export async function createUser({
   emailPrimary,
   branch,
 }: CreateUserParams): Promise<void> {
-  const userDocRef = doc(db, "users", id);
+  // Path is now /colleges/{collegeID}/users/{id}
+  const userDocRef = doc(db, "colleges", collegeID, "users", id);
 
   await setDoc(userDocRef, {
     id,
@@ -83,15 +84,17 @@ interface UserProfile {
 }
 
 export async function getAllUsersAsProfileString(): Promise<string> {
-    const usersCol = collection(db, 'users');
-    const userSnapshot = await getDocs(usersCol);
+    // Use a collectionGroup query to get all 'users' subcollections from all 'colleges'
+    const usersQuery = collectionGroup(db, 'users');
+    const userSnapshot = await getDocs(usersQuery);
+    
     const userList = userSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
             userId: doc.id,
             name: `${data.firstName} ${data.lastName}`,
             interests: data.interests || [],
-            skills: data.skills || [], // Assuming skills are stored similarly to interests
+            skills: data.skills || [],
             bio: data.bio || '',
         }
     });

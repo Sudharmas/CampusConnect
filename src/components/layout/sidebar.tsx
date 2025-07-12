@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 
@@ -32,15 +32,23 @@ export function AppSidebar() {
     const fetchUserData = async () => {
       const user = auth.currentUser;
       if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setUserProfile({
-            fullName: `${data.firstName} ${data.lastName}`,
-            email: data.emailPrimary,
-            profilePhotoURL: data.profilePhotoURL
-          });
+        // Since we don't know the collegeID, we must perform a collection group query.
+        const usersCollectionGroup = collectionGroup(db, 'users');
+        const q = query(usersCollectionGroup, where("id", "==", user.uid), limit(1));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                setUserProfile({
+                    fullName: `${data.firstName} ${data.lastName || ''}`.trim(),
+                    email: data.emailPrimary,
+                    profilePhotoURL: data.profilePhotoURL
+                });
+            }
+        } else {
+            console.log("User document not found in any college's users subcollection.");
         }
       }
     };
