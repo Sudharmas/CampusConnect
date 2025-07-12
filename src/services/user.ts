@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
 // User data is now stored in a top-level 'users' collection.
 export interface User {
@@ -96,6 +96,25 @@ export async function updateUser(userId: string, data: UserUpdatePayload): Promi
         ...data,
         updatedAt: serverTimestamp(),
     });
+}
+
+export async function updateUserOptionalEmail(userId: string, email: string): Promise<void> {
+    if (!userId) {
+        throw new Error("User ID is required to update the email.");
+    }
+    const userDocRef = doc(db, "users", userId);
+    await updateDoc(userDocRef, {
+        emailOptional: email,
+        updatedAt: serverTimestamp(),
+    });
+}
+
+export async function deleteUserAccount(userId: string): Promise<void> {
+    if (!userId) {
+        throw new Error("User ID is required to delete the account.");
+    }
+    const userDocRef = doc(db, "users", userId);
+    await deleteDoc(userDocRef);
 }
 
 

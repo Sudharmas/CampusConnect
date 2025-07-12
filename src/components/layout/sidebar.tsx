@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Home, User, Lightbulb, GraduationCap, Code, Settings, LogOut } from "lucide-react";
+import { Home, User, Lightbulb, GraduationCap, Code, Settings, LogOut, UserCog } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -19,7 +19,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useEffect, useState } from "react";
 import { getUserById } from "@/services/user";
-
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -122,21 +122,34 @@ export function AppSidebar() {
             </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="p-4 border-t border-border">
-            <div className="flex items-center gap-3">
-                <Link href="/profile" className="flex items-center gap-3 flex-1 overflow-hidden">
-                    <Avatar>
-                        <AvatarImage src={userProfile?.profilePhotoURL || "https://placehold.co/40x40"} alt="User" />
-                        <AvatarFallback>{userProfile?.fullName ? userProfile.fullName.charAt(0) : 'U'}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                        <p className="font-semibold text-sm truncate">{userProfile?.fullName || 'User Name'}</p>
-                        <p className="text-xs text-muted-foreground truncate">{userProfile?.email || 'user@campus.edu'}</p>
-                    </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex items-center gap-3 w-full text-left rounded-md p-2 hover:bg-muted transition-colors">
+                  <Avatar>
+                      <AvatarImage src={userProfile?.profilePhotoURL || "https://placehold.co/40x40"} alt="User" />
+                      <AvatarFallback>{userProfile?.fullName ? userProfile.fullName.charAt(0) : 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 overflow-hidden">
+                      <p className="font-semibold text-sm truncate">{userProfile?.fullName || 'User Name'}</p>
+                      <p className="text-xs text-muted-foreground truncate">{userProfile?.email || 'user@campus.edu'}</p>
+                  </div>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 mb-2" side="top" align="start">
+              <div className="flex flex-col space-y-1">
+                <Link href="/account">
+                  <Button variant="ghost" className="w-full justify-start">
+                    <UserCog className="mr-2 h-4 w-4" />
+                    Account Management
+                  </Button>
                 </Link>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={handleLogout}>
-                    <LogOut className="h-5 w-5"/>
+                <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4"/>
+                    Logout
                 </Button>
-            </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </SidebarFooter>
     </Sidebar>
   );
