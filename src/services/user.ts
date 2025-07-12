@@ -1,7 +1,7 @@
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, serverTimestamp, setDoc, collectionGroup } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc } from "firebase/firestore";
 
-// Corresponds to the `users` subcollection schema under a college document
+// User data is now stored in a top-level 'users' collection.
 export interface User {
   id: string;
   role: "user" | "admin";
@@ -14,7 +14,6 @@ export interface User {
   emailPrimaryVerified: boolean;
   emailOptional: string;
   emailOptionalVerified: boolean;
-
   branch: string;
   interests: string[];
   skills: string[];
@@ -47,8 +46,8 @@ export async function createUser({
   emailPrimary,
   branch,
 }: CreateUserParams): Promise<void> {
-  // Path is now /colleges/{collegeID}/users/{id}
-  const userDocRef = doc(db, "colleges", collegeID, "users", id);
+  // Path is now simply /users/{id}
+  const userDocRef = doc(db, "users", id);
 
   await setDoc(userDocRef, {
     id,
@@ -66,13 +65,24 @@ export async function createUser({
     interests: [],
     skills: [],
     bio: "",
-
     profilePhotoURL: "",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 }
 
+export async function getUserById(userId: string): Promise<User | null> {
+    if (!userId) return null;
+
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (userDoc.exists()) {
+        return userDoc.data() as User;
+    } else {
+        return null;
+    }
+}
 
 // This is a simplified representation of a user profile for the AI
 interface UserProfile {
@@ -84,9 +94,9 @@ interface UserProfile {
 }
 
 export async function getAllUsersAsProfileString(): Promise<string> {
-    // Use a collectionGroup query to get all 'users' subcollections from all 'colleges'
-    const usersQuery = collectionGroup(db, 'users');
-    const userSnapshot = await getDocs(usersQuery);
+    // Query the top-level 'users' collection
+    const usersCollectionRef = collection(db, 'users');
+    const userSnapshot = await getDocs(usersCollectionRef);
     
     const userList = userSnapshot.docs.map(doc => {
         const data = doc.data();

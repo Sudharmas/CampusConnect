@@ -8,8 +8,8 @@ interface CollegeData {
 }
 
 /**
- * Adds or updates a college in the top-level 'colleges' collection.
- * The path is now /colleges/{collegeId}.
+ * Adds or updates a college in the top-level 'collegedetails' collection.
+ * The path is now /collegedetails/{collegeId}.
  * @param collegeId The unique ID for the college (e.g., '4SN').
  * @param collegeData The data for the college.
  */
@@ -23,11 +23,11 @@ export async function addCollege(collegeId: string, collegeData: CollegeData): P
 
     try {
         // The new, simplified path to the college document.
-        const collegeDocRef = doc(db, 'colleges', collegeId.toUpperCase());
+        const collegeDocRef = doc(db, 'collegedetails', collegeId.toUpperCase());
 
         await setDoc(collegeDocRef, {
             ...collegeData,
-            collegeID: collegeId.toUpperCase(), 
+            id: collegeId.toUpperCase(), 
             updatedAt: serverTimestamp(),
         }, { merge: true });
 

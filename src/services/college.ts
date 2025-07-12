@@ -13,8 +13,8 @@ export async function getCollegeById(collegeId: string): Promise<College | null>
     // Always convert to uppercase to match the stored ID format
     const normalizedCollegeId = collegeId.toUpperCase();
 
-    // The new, simplified path is /colleges/<collegeId>
-    const collegeDocRef = doc(db, 'colleges', normalizedCollegeId);
+    // The new, simplified path is /collegedetails/<collegeId>
+    const collegeDocRef = doc(db, 'collegedetails', normalizedCollegeId);
     const collegeDoc = await getDoc(collegeDocRef);
 
     if (collegeDoc.exists()) {

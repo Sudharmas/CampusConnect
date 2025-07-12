@@ -50,7 +50,6 @@ export default function SignupPage() {
     resolver: async (data, context, options) => {
       const result = await zodResolver(signupFormSchema)(data, context, options);
 
-      // Custom validation after initial Zod check
       if (result.errors.collegeID || result.errors.email || result.errors.role) {
         return result;
       }
@@ -174,7 +173,7 @@ export default function SignupPage() {
                             <RadioGroup
                             onValueChange={(value) => {
                               field.onChange(value);
-                              trigger("email"); // Re-validate email when role changes
+                              trigger("email");
                             }}
                             defaultValue={field.value}
                             className="flex space-x-4"
