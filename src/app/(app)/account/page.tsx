@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
-import { User as FirebaseUser } from "firebase/auth";
-import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, sendOptionalEmailVerificationLink } from "@/services/user";
+import { User as FirebaseUser, sendEmailVerification } from "firebase/auth";
+import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, sendOptionalEmailVerificationLink, markEmailAsVerified } from "@/services/user";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
@@ -37,12 +37,12 @@ export default function AccountPage() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         await user.reload(); 
+        const updatedUser = await markEmailAsVerified(user.uid);
         setFirebaseUser(user);
-        const fetchedUser = await getUserById(user.uid);
-        if (fetchedUser) {
-            setCampusUser(fetchedUser);
-            setOptionalEmailInput(fetchedUser.emailOptional || "");
-            setIsEditingOptionalEmail(!fetchedUser.emailOptional);
+        if (updatedUser) {
+            setCampusUser(updatedUser);
+            setOptionalEmailInput(updatedUser.emailOptional || "");
+            setIsEditingOptionalEmail(!updatedUser.emailOptional);
         }
       } else {
         setFirebaseUser(null);
@@ -76,7 +76,24 @@ export default function AccountPage() {
     }
   };
 
-  const handleSendVerificationLink = async () => {
+  const handleSendPrimaryVerificationLink = async () => {
+    if (!firebaseUser) return;
+    try {
+      await sendEmailVerification(firebaseUser);
+      toast({
+        title: "Verification Link Sent",
+        description: `A verification link has been sent to ${firebaseUser.email}. Please check your inbox.`
+      })
+    } catch (error: any) {
+       toast({
+        title: "Error Sending Link",
+        description: error.message || "Failed to send verification link.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleSendOptionalVerificationLink = async () => {
     if (!firebaseUser || !campusUser?.emailOptional) return;
     try {
       await sendOptionalEmailVerificationLink(firebaseUser.uid, campusUser.emailOptional);
@@ -87,7 +104,7 @@ export default function AccountPage() {
     } catch (error: any) {
       toast({
         title: "Failed to Send Link",
-        description: error.message || "Could not send verification email. Please check extension configuration.",
+        description: error.message || "Could not send verification email.",
         variant: "destructive"
       });
     }
@@ -98,7 +115,6 @@ export default function AccountPage() {
     setIsDeleting(true);
     try {
         await deleteUserAccount(firebaseUser.uid);
-        // Note: In a real app, you might need to re-authenticate the user before this operation.
         await firebaseUser.delete();
         toast({
             title: "Account Deleted",
@@ -141,6 +157,9 @@ export default function AccountPage() {
                 <Label htmlFor="primary-email">Primary Email</Label>
                 <div className="flex items-center gap-4">
                     <Input id="primary-email" type="email" value={campusUser.emailPrimary} disabled />
+                     {!primaryEmailVerified && (
+                        <Button onClick={handleSendPrimaryVerificationLink}>Verify</Button>
+                    )}
                 </div>
                  <Badge variant={primaryEmailVerified ? "default" : "destructive"} className={primaryEmailVerified ? "bg-green-600/80" : ""}>
                     {primaryEmailVerified ? "Verified" : "Not Verified"}
@@ -160,7 +179,10 @@ export default function AccountPage() {
                         <Button onClick={handleSaveOptionalEmail} disabled={isSaving}>
                             {isSaving ? "Saving..." : "Save"}
                         </Button>
-                        <Button variant="outline" onClick={() => setIsEditingOptionalEmail(false)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => {
+                            setIsEditingOptionalEmail(false);
+                            setOptionalEmailInput(campusUser.emailOptional || "");
+                        }}>Cancel</Button>
                     </div>
                 ) : (
                     <div className="flex items-center gap-4">
@@ -169,7 +191,7 @@ export default function AccountPage() {
                           <>
                             <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
                             {!campusUser.emailOptionalVerified && (
-                                <Button onClick={handleSendVerificationLink}>Verify</Button>
+                                <Button onClick={handleSendOptionalVerificationLink}>Verify</Button>
                             )}
                           </>
                         )}

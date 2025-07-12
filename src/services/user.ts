@@ -261,28 +261,30 @@ export async function getConnections(userId: string): Promise<string[]> {
  * @param email The optional email address to verify.
  */
 export async function sendOptionalEmailVerificationLink(userId: string, email: string): Promise<void> {
-  if (!userId || !email) {
-    throw new Error("User ID and email are required.");
+    if (!userId || !email) {
+      throw new Error("User ID and email are required.");
+    }
+  
+    const verificationLink = `${window.location.origin}/verify-email?userId=${userId}&email=${email}&type=optional`;
+  
+    try {
+      await addDoc(collection(db, "mail"), {
+        to: email,
+        message: {
+          subject: "Verify your Optional Email for CampusConnect",
+          html: `
+            <h1>Welcome to CampusConnect!</h1>
+            <p>Please click the link below to verify your optional email address:</p>
+            <a href="${verificationLink}" target="_blank">Verify Email</a>
+            <p>If you did not request this, please ignore this email.</p>
+          `,
+        },
+        createdAt: serverTimestamp(),
+      });
+    } catch(error: any) {
+        if (error.code === 'permission-denied') {
+            throw new Error("Firestore permission denied. Ensure your security rules allow writing to the 'mail' collection.");
+        }
+        throw new Error("Could not send verification email. Please ensure the Trigger Email extension is configured correctly.");
+    }
   }
-
-  // Generate a verification link. In a real app, this should contain a secure, unique token.
-  // For this implementation, we'll create a link that, when clicked, will update the user's
-  // verification status in the database.
-  // IMPORTANT: This is a simplified approach. A production app should use a Cloud Function
-  // to generate a secure token and handle the verification on the backend.
-  const verificationLink = `${window.location.origin}/verify-email?userId=${userId}&email=${email}&type=optional`;
-
-  await addDoc(collection(db, "mail"), {
-    to: email,
-    message: {
-      subject: "Verify your Optional Email for CampusConnect",
-      html: `
-        <h1>Welcome to CampusConnect!</h1>
-        <p>Please click the link below to verify your optional email address:</p>
-        <a href="${verificationLink}" target="_blank">Verify Email</a>
-        <p>If you did not request this, please ignore this email.</p>
-      `,
-    },
-    createdAt: serverTimestamp(),
-  });
-}
