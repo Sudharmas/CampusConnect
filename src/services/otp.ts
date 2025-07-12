@@ -8,50 +8,37 @@ import type { User } from "./user";
  * In a real, scalable application, you would use a database like Redis or Firestore
  * to store OTPs. For this demo, a simple Map is sufficient.
  */
-
 const otpStore: Map<string, { code: string; expires: number }> = new Map();
 const ADMIN_OTP = "123456"; // Static OTP for admins for easy testing
 
 /**
- * Stores an OTP for a given email address. This function is called by the API route.
- * @param email The user's email address.
- * @param code The OTP to store.
- * @param expires The expiration timestamp.
- */
-export async function storeOtp(email: string, code: string, expires: number): Promise<void> {
-  otpStore.set(email, { code, expires });
-}
-
-
-/**
- * Sends an OTP to the user's email by calling our internal API route.
+ * Generates and stores an OTP for a given email address.
  * It handles the special case for the 'admin' role.
  * @param email The email address to send the OTP to.
  * @param role The role of the user ('admin' or 'user').
+ * @returns The generated OTP for display/testing purposes.
  */
-export async function sendOtp(email: string, role: User['role']): Promise<void> {
+export async function sendOtp(email: string, role: User['role']): Promise<string> {
+  const expires = Date.now() + 15 * 60 * 1000; // 15 minutes from now
+  let code: string;
+
   if (role === 'admin') {
-    // For admins, we use a static OTP and don't actually send an email.
-    const expires = Date.now() + 15 * 60 * 1000; // 15 minutes
-    otpStore.set(email, { code: ADMIN_OTP, expires });
-    console.log(`Admin OTP for ${email}: ${ADMIN_OTP}`); // This is for testing convenience
-    return;
+    code = ADMIN_OTP;
+  } else {
+    // Generate a random 6-digit OTP for regular users
+    code = Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  // For regular users, call the API route to send a real email.
-  const response = await fetch('/api/send-otp', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-  });
+  // Store the OTP and its expiration time
+  otpStore.set(email, { code, expires });
+  
+  // In a real app, you would send this code via email.
+  // For this demo, we return it so the frontend can display it in a toast for easy testing.
+  console.log(`(Simulation) OTP for ${email} is: ${code}`);
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to send OTP email.');
-  }
+  return code;
 }
+
 
 /**
  * Verifies the OTP entered by the user.
