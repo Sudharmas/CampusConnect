@@ -1,16 +1,18 @@
 
 "use client";
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageCircle, Heart, Share2, ImageIcon, Video, Music, UserPlus } from 'lucide-react';
+import { MessageCircle, Heart, Share2, ImageIcon, Video, Music, UserPlus, X } from 'lucide-react';
 import Image from "next/image";
 import { useToast } from '@/hooks/use-toast';
 import { addConnection } from '@/services/user';
 import { auth } from '@/lib/firebase';
 import Link from 'next/link';
+import { uploadFile } from '@/services/storage';
+import { Progress } from './ui/progress';
 
 const initialPosts = [
   {
@@ -57,23 +59,73 @@ export function CampusFeed() {
   const [posts, setPosts] = useState(initialPosts);
   const [newPost, setNewPost] = useState('');
   const { toast } = useToast();
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
-  const handlePost = () => {
-    if (newPost.trim()) {
-      const post = {
-        id: posts.length + 1,
-        authorId: auth.currentUser?.uid || "user1",
-        author: 'User Name',
-        avatar: 'https://placehold.co/40x40.png',
-        handle: '@username',
-        time: 'Just now',
-        content: newPost,
-        likes: 0,
-        comments: 0,
-        isProject: false,
-      };
-      setPosts([post, ...posts]);
-      setNewPost('');
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        setFileToUpload(file);
+        setFilePreview(URL.createObjectURL(file));
+      } else {
+        toast({
+          title: "Unsupported File Type",
+          description: "For now, only images are supported.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+  
+  const removeFile = () => {
+    setFileToUpload(null);
+    setFilePreview(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  }
+
+  const handlePost = async () => {
+    if (!newPost.trim() && !fileToUpload) return;
+
+    let imageUrl: string | undefined = undefined;
+
+    setUploadProgress(0); // Start showing progress bar
+
+    try {
+        if (fileToUpload) {
+            const downloadURL = await uploadFile(fileToUpload, `posts/${auth.currentUser?.uid}/${Date.now()}_${fileToUpload.name}`, setUploadProgress);
+            imageUrl = downloadURL;
+        }
+
+        const post = {
+            id: posts.length + 1,
+            authorId: auth.currentUser?.uid || "user1",
+            author: 'User Name', // In a real app, get this from user profile
+            avatar: 'https://placehold.co/40x40.png',
+            handle: '@username',
+            time: 'Just now',
+            content: newPost,
+            image: imageUrl,
+            likes: 0,
+            comments: 0,
+            isProject: false,
+        };
+        setPosts([post, ...posts]);
+        setNewPost('');
+        removeFile();
+    } catch (error) {
+        toast({
+            title: "Post Failed",
+            description: "There was an error creating your post. Please try again.",
+            variant: "destructive"
+        });
+    } finally {
+        setUploadProgress(null);
     }
   };
 
@@ -99,6 +151,7 @@ export function CampusFeed() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,video/*,audio/*" />
       <Card className="mb-6 bg-card/50 backdrop-blur-sm">
         <CardContent className="p-4">
           <Textarea
@@ -107,13 +160,29 @@ export function CampusFeed() {
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
           />
+          {filePreview && (
+              <div className="mt-4 relative">
+                  <Image src={filePreview} width={600} height={400} alt="Preview" className="rounded-lg object-cover w-full h-auto" />
+                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={removeFile}>
+                      <X className="h-4 w-4" />
+                  </Button>
+              </div>
+          )}
+           {uploadProgress !== null && (
+               <div className="mt-4 space-y-1">
+                <p className="text-sm text-muted-foreground">Uploading...</p>
+                <Progress value={uploadProgress} />
+               </div>
+            )}
           <div className="flex justify-between items-center mt-4">
             <div className="flex gap-1 text-muted-foreground">
-                <Button variant="ghost" size="icon"><ImageIcon className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon"><Music className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon"><Video className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Audio uploads will be available in a future update."})}><Music className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Video uploads will be available in a future update."})}><Video className="h-5 w-5" /></Button>
             </div>
-            <Button className="button-glow" onClick={handlePost}>Post</Button>
+            <Button className="button-glow" onClick={handlePost} disabled={uploadProgress !== null}>
+                {uploadProgress !== null ? "Posting..." : "Post"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -167,5 +236,3 @@ export function CampusFeed() {
     </div>
   );
 }
-
-    
