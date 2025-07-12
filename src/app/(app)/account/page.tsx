@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { User as FirebaseUser, sendEmailVerification } from "firebase/auth";
-import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, markEmailAsVerified, markOptionalEmailAsVerified } from "@/services/user";
+import { updateUserOptionalEmail, deleteUserAccount, User, markEmailAsVerified, markOptionalEmailAsVerified } from "@/services/user";
 import { getCollegeById } from "@/services/college";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -131,19 +131,34 @@ export default function AccountPage() {
   const handleVerifyOptionalEmail = async () => {
     if (!firebaseUser) return;
     setIsVerifying(true);
+    
+    // Optimistic UI update
+    setCampusUser(prev => prev ? { ...prev, emailOptionalVerified: true } : null);
+    
     try {
       await markOptionalEmailAsVerified(firebaseUser.uid);
-      setCampusUser(prev => prev ? { ...prev, emailOptionalVerified: true } : null);
       toast({
         title: "Email Verified",
         description: "Your optional email has been marked as verified.",
       });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to verify optional email.",
-        variant: "destructive",
-      });
+       let errorMessage = "Failed to verify optional email.";
+       if (error.code === 'permission-denied') {
+          errorMessage = "Could not save to database. Check Firestore security rules.";
+          toast({
+            title: "Verification Saved Locally",
+            description: "The verification status has been updated on this page, but we couldn't save it to the database. Please check your Firestore security rules.",
+            variant: "default",
+          });
+       } else {
+         toast({
+            title: "Error",
+            description: error.message || errorMessage,
+            variant: "destructive",
+         });
+         // Revert optimistic update on failure
+         setCampusUser(prev => prev ? { ...prev, emailOptionalVerified: false } : null);
+       }
     } finally {
       setIsVerifying(false);
     }
@@ -196,14 +211,16 @@ export default function AccountPage() {
                         <Button onClick={handleSaveOptionalEmail} disabled={isSaving}>
                             {isSaving ? "Saving..." : "Save"}
                         </Button>
-                        <Button variant="outline" onClick={() => {
-                            setIsEditingOptionalEmail(false);
-                            setOptionalEmailInput(campusUser.emailOptional || "");
-                        }}>Cancel</Button>
+                        { campusUser.emailOptional && (
+                            <Button variant="outline" onClick={() => {
+                                setIsEditingOptionalEmail(false);
+                                setOptionalEmailInput(campusUser.emailOptional || "");
+                            }}>Cancel</Button>
+                        )}
                     </div>
                 ) : (
                     <div className="flex items-center gap-4">
-                        <Input id="optional-email-display" type="email" value={campusUser.emailOptional || ""} disabled />
+                        <Input id="optional-email-display" type="email" value={campusUser.emailOptional || "No optional email added"} disabled />
                         {campusUser.emailOptional && !campusUser.emailOptionalVerified && (
                           <Button onClick={handleVerifyOptionalEmail} disabled={isVerifying}>
                             {isVerifying ? "Verifying..." : "Verify"}
