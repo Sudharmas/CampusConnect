@@ -108,8 +108,8 @@ export default function LoginPage() {
           {error && (
             <p className="text-sm text-destructive animate-shake">{error}</p>
           )}
-          <div className="login-button-container">
-             <Button type="submit" className="w-full login-button-inner" disabled={isLoading}>
+          <div className="login-container">
+             <Button type="submit" className="login-button" disabled={isLoading}>
                 {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </div>

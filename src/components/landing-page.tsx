@@ -40,8 +40,8 @@ export function LandingPage() {
             Alumni
           </Link>
           <Link href="/login" prefetch={false}>
-             <div className="login-button-container-nav">
-                <Button variant="outline" className="login-button-inner-nav border-none shadow-none text-foreground">
+             <div className="login-container-nav">
+                <Button variant="outline" className="login-button-nav border-none shadow-none text-foreground">
                   Login
                 </Button>
               </div>

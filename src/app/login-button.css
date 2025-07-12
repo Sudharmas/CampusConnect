@@ -1,5 +1,17 @@
 
-.login-button-container {
+.login-button {
+  font-size: 1.4em;
+  padding: 0.6em 0.8em;
+  border-radius: 0.5em;
+  border: none;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  box-shadow: 2px 2px 3px #000000b4;
+  width: 100%;
+}
+
+.login-container {
   position: relative;
   padding: 3px;
   background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
@@ -8,7 +20,7 @@
   width: 100%;
 }
 
-.login-button-container::before {
+.login-container::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -19,36 +31,23 @@
   transition: filter 0.4s ease;
 }
 
-.login-button-container:hover::before {
+.login-container:hover::before {
   background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
   filter: blur(1.2em);
 }
-
-.login-button-container:active::before {
+.login-container:active::before {
   filter: blur(0.2em);
 }
 
-.login-button-inner {
-  width: 100%;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  border: none;
-  box-shadow: 2px 2px 3px #000000b4;
-  border-radius: 0.7em; /* Slightly smaller than container to show the border */
-}
-
-.login-button-inner:hover {
-    background-color: hsl(var(--background) / 0.9);
-}
-
-.login-button-container-nav {
+/* Styles for the nav button to be less intrusive */
+.login-container-nav {
   position: relative;
-  padding: 3px;
+  padding: 2px;
   background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
   border-radius: 0.5em; /* Match button's default rounded-md */
   transition: all 0.4s ease;
 }
-.login-button-container-nav::before {
+.login-container-nav::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -58,14 +57,13 @@
   filter: blur(0);
   transition: filter 0.4s ease;
 }
-.login-button-container-nav:hover::before {
+.login-container-nav:hover::before {
   background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
   filter: blur(0.8em);
 }
-.login-button-container-nav:active::before {
+.login-container-nav:active::before {
   filter: blur(0.2em);
 }
-.login-button-inner-nav {
+.login-button-nav {
    background-color: hsl(var(--background));
 }
-
