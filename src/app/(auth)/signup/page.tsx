@@ -19,11 +19,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 import { getCollegeById, College } from '@/services/college';
+import { createUser } from '@/services/user';
 
 const signupFormSchema = z.object({
   role: z.enum(["user", "admin"], {
@@ -44,37 +44,39 @@ export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [college, setCollege] = useState<College | null>(null);
-  const [collegeError, setCollegeError] = useState<string | null>(null);
   const [isFetchingCollege, setIsFetchingCollege] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: async (data, context, options) => {
-      // Fetch college info for validation if role is admin
-      let fetchedCollege: College | null = null;
-      if (data.role === 'admin' && data.collegeID) {
-        fetchedCollege = await getCollegeById(data.collegeID);
+      const result = await zodResolver(signupFormSchema)(data, context, options);
+
+      // Custom validation after initial Zod check
+      if (result.errors.collegeID || result.errors.email || result.errors.role) {
+        return result;
+      }
+
+      const college = await getCollegeById(data.collegeID);
+      if (!college) {
+        return {
+          values: {},
+          errors: {
+            ...result.errors,
+            collegeID: { type: 'manual', message: 'College ID not found.' }
+          }
+        };
+      }
+
+      if (data.role === 'admin' && !data.email.endsWith(`@${college.emailDomain}`)) {
+         return {
+          values: {},
+          errors: {
+            ...result.errors,
+            email: { type: 'manual', message: 'Admins must use their official college email address.' }
+          }
+        };
       }
       
-      const schema = signupFormSchema.refine(val => {
-        if (val.role === 'admin') {
-            if (fetchedCollege) {
-                return val.email.endsWith(`@${fetchedCollege.emailDomain}`);
-            }
-            return false; // Cannot validate without a fetched college
-        }
-        return true;
-      }, {
-          message: "Admins must use their official college email address.",
-          path: ["email"],
-      }).refine(async (val) => {
-          const collegeExists = await getCollegeById(val.collegeID);
-          return !!collegeExists;
-      }, {
-        message: "College ID not found.",
-        path: ["collegeID"],
-      });
-
-      return zodResolver(schema)(data, context, options);
+      return result;
     },
     defaultValues: {
         role: "user",
@@ -89,24 +91,21 @@ export default function SignupPage() {
     mode: "onBlur"
   });
 
-  const { formState: { isSubmitting }, watch, trigger } = form;
+  const { formState: { isSubmitting }, watch, trigger, setError } = form;
   const collegeIDValue = watch('collegeID');
 
   const handleCollegeIdBlur = async () => {
       if (collegeIDValue) {
         setIsFetchingCollege(true);
-        setCollegeError(null);
         setCollege(null);
         const fetchedCollege = await getCollegeById(collegeIDValue);
         if (fetchedCollege) {
           setCollege(fetchedCollege);
-          // Re-validate email if role is admin
           if (form.getValues('role') === 'admin') {
             trigger("email");
           }
         } else {
-          setCollegeError("College with this ID not found.");
-          form.setError("collegeID", { type: "manual", message: "College ID not found."});
+          setError("collegeID", { type: "manual", message: "College with this ID not found."});
         }
         setIsFetchingCollege(false);
       }
@@ -114,7 +113,6 @@ export default function SignupPage() {
 
 
   const handleSignup = async (values: SignupFormValues) => {
-    // Final check for college before submitting
     const finalCollege = college || await getCollegeById(values.collegeID);
     if (!finalCollege) {
          toast({
@@ -129,22 +127,16 @@ export default function SignupPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
       
-      await setDoc(doc(db, "users", user.uid), {
+      await createUser({
         id: user.uid,
         role: values.role,
         firstName: values.firstName,
-        lastName: values.lastName || "",
+        lastName: values.lastName,
         USN: values.usn,
         collegeName: finalCollege.name,
         collegeID: values.collegeID,
         emailPrimary: values.email,
-        emailPrimaryVerified: false,
-        passwordHash: "", // Don't store password hash here for security reasons, Firebase Auth handles it.
         branch: values.branch,
-        interests: [],
-        profilePhotoURL: "",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
 
       toast({
@@ -180,7 +172,10 @@ export default function SignupPage() {
                         <FormLabel>I am a...</FormLabel>
                         <FormControl>
                             <RadioGroup
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              trigger("email"); // Re-validate email when role changes
+                            }}
                             defaultValue={field.value}
                             className="flex space-x-4"
                             >
