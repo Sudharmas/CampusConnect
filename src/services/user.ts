@@ -1,6 +1,27 @@
 import { db } from "@/lib/firebase";
 import { collection, doc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 
+// Corresponds to the `users` collection schema
+export interface User {
+  id: string;
+  role: "user" | "admin";
+  firstName: string;
+  lastName: string;
+  USN: string;
+  collegeName: string;
+  collegeID: string;
+  emailPrimary: string;
+  emailPrimaryVerified: boolean;
+  emailOptional: string;
+  emailOptionalVerified: boolean;
+
+  branch: string;
+  interests: string[];
+  profilePhotoURL: string;
+  createdAt: any; // serverTimestamp() is not a Date object
+  updatedAt: any; // serverTimestamp() is not a Date object
+}
+
 interface CreateUserParams {
   id: string;
   role: "user" | "admin";
@@ -26,6 +47,7 @@ export async function createUser({
 }: CreateUserParams): Promise<void> {
   const userDocRef = doc(db, "users", id);
 
+  // Set document with all fields as per the schema
   await setDoc(userDocRef, {
     id,
     role,
@@ -38,7 +60,7 @@ export async function createUser({
     emailPrimaryVerified: false,
     emailOptional: "",
     emailOptionalVerified: false,
-    passwordHash: "", // This should not be stored here. Firebase Auth handles it securely.
+    // passwordHash is handled by Firebase Auth and should not be stored here.
     branch,
     interests: [],
     profilePhotoURL: "",
