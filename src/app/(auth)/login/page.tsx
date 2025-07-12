@@ -47,7 +47,8 @@ export default function LoginPage() {
       let email = identifier;
       // Check if the identifier is a USN (does not contain '@')
       if (!identifier.includes('@')) {
-          const user = await getUserByUsn(identifier);
+          const usn = identifier.toUpperCase(); // Ensure it's uppercase before search
+          const user = await getUserByUsn(usn);
           if (user) {
               email = user.emailPrimary;
           } else {
