@@ -42,9 +42,11 @@ export default function AccountPage() {
         
         let updatedUser: User | null = null;
         try {
+            // This can fail if rules are restrictive, so we catch it.
             updatedUser = await markEmailAsVerified(user.uid);
         } catch (error) {
             console.error("Permission error checking primary email verification, falling back:", error);
+            // Fallback to just reading the user data if the write fails
             updatedUser = await getUserById(user.uid);
         }
 
