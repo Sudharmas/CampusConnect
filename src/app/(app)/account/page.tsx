@@ -85,23 +85,17 @@ export default function AccountPage() {
   const handleSendOtp = async () => {
     if (!campusUser || !campusUser.emailOptional) return;
     try {
-      const otp = await sendOtp(campusUser.emailOptional, campusUser.role);
+      await sendOtp(campusUser.emailOptional, campusUser.role);
       setEmailToVerify(campusUser.emailOptional);
       setIsOtpDialogOpen(true);
-      
-      // For local development/testing, show the OTP in the toast.
-      // In production, the email will be sent by the Firebase extension.
-      const isProduction = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
       toast({
-        title: `OTP Sent${isProduction ? '' : ' (Simulation)'}`,
-        description: isProduction 
-          ? `An OTP has been sent to ${campusUser.emailOptional}.`
-          : `Check your inbox, or use this code for testing: ${otp}`
+        title: "OTP Sent",
+        description: `An OTP has been sent to ${campusUser.emailOptional}. Please check your inbox.`,
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to send OTP.",
+        title: "Failed to Send OTP",
+        description: error.message || "Could not send verification email. Please check your setup.",
         variant: "destructive"
       });
     }
