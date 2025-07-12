@@ -7,10 +7,13 @@ export interface College {
     emailDomain: string;
 }
 
+const parentDocRef = doc(db, 'colleges', 'college-data');
+
 export async function getCollegeById(collegeId: string): Promise<College | null> {
     if (!collegeId) return null;
     
-    const collegeDocRef = doc(db, 'colleges', collegeId);
+    // The path is now /colleges/college-data/all-colleges/<collegeId>
+    const collegeDocRef = doc(parentDocRef, 'all-colleges', collegeId);
     const collegeDoc = await getDoc(collegeDocRef);
 
     if (collegeDoc.exists()) {
