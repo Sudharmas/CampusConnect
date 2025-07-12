@@ -1,28 +1,25 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-  
-    // Allow anyone to create a user account during signup
     match /users/{userId} {
-      allow create: if true;
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      // Allow any authenticated user to read user profiles (for search).
+      allow read: if request.auth != null;
       
-      // Allow authenticated users to manage their connections
-      match /connections/{connectionId} {
-         allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+      // Allow anyone to create a user account (for signup).
+      allow create: if true;
+
+      // Only allow a user to update or delete their own document.
+      allow update, delete: if request.auth.uid == userId;
+
+      // Allow access to subcollections like 'connections'
+      match /{document=**} {
+        allow read, write: if request.auth.uid == userId;
       }
     }
-    
-    // Allow anyone to add or read college details.
-    // This is useful for the admin page and signup form.
-    match /collegedetails/{collegeId} {
-        allow read, create: if true;
-    }
 
-    // Default deny all other collections
-    match /{document=**} {
-      allow read, write: if false;
+    match /collegedetails/{collegeId} {
+      // Allow anyone to read or create college details (for signup/admin page).
+      allow read, create: if true;
     }
   }
 }
