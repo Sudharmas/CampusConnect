@@ -15,19 +15,15 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// This would typically come from your database
-const colleges = [
-    { collegeID: "C001", name: "Innovate University", emailDomain: "innovate.edu.in" },
-    { collegeID: "C002", name: "Tech Academy", emailDomain: "tech.edu.in" }
-];
+import { useState } from 'react';
+import { getCollegeById, College } from '@/services/college';
 
 const signupFormSchema = z.object({
   role: z.enum(["user", "admin"], {
@@ -36,22 +32,10 @@ const signupFormSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters."),
   lastName: z.string().optional(),
   usn: z.string().min(5, "USN must be at least 5 characters."),
-  collegeID: z.string({ required_error: "Please select a college." }),
+  collegeID: z.string().min(1, "Please enter a college ID."),
   branch: z.string({ required_error: "Please select a branch." }),
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(8, "Password must be at least 8 characters.").max(20, "Password must be at most 20 characters."),
-}).refine(data => {
-    if (data.role === 'admin') {
-        const selectedCollege = colleges.find(c => c.collegeID === data.collegeID);
-        if (selectedCollege) {
-            return data.email.endsWith(`@${selectedCollege.emailDomain}`);
-        }
-        return false;
-    }
-    return true;
-}, {
-    message: "Admins must use their official college email address.",
-    path: ["email"],
 });
 
 type SignupFormValues = z.infer<typeof signupFormSchema>;
@@ -59,30 +43,99 @@ type SignupFormValues = z.infer<typeof signupFormSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [college, setCollege] = useState<College | null>(null);
+  const [collegeError, setCollegeError] = useState<string | null>(null);
+  const [isFetchingCollege, setIsFetchingCollege] = useState(false);
 
   const form = useForm<SignupFormValues>({
-    resolver: zodResolver(signupFormSchema),
+    resolver: async (data, context, options) => {
+      // Fetch college info for validation if role is admin
+      let fetchedCollege: College | null = null;
+      if (data.role === 'admin' && data.collegeID) {
+        fetchedCollege = await getCollegeById(data.collegeID);
+      }
+      
+      const schema = signupFormSchema.refine(val => {
+        if (val.role === 'admin') {
+            if (fetchedCollege) {
+                return val.email.endsWith(`@${fetchedCollege.emailDomain}`);
+            }
+            return false; // Cannot validate without a fetched college
+        }
+        return true;
+      }, {
+          message: "Admins must use their official college email address.",
+          path: ["email"],
+      }).refine(async (val) => {
+          const collegeExists = await getCollegeById(val.collegeID);
+          return !!collegeExists;
+      }, {
+        message: "College ID not found.",
+        path: ["collegeID"],
+      });
+
+      return zodResolver(schema)(data, context, options);
+    },
     defaultValues: {
         role: "user",
-    }
+        firstName: "",
+        lastName: "",
+        usn: "",
+        collegeID: "",
+        branch: "",
+        email: "",
+        password: ""
+    },
+    mode: "onBlur"
   });
 
-  const { formState: { isSubmitting } } = form;
+  const { formState: { isSubmitting }, watch, trigger } = form;
+  const collegeIDValue = watch('collegeID');
+
+  const handleCollegeIdBlur = async () => {
+      if (collegeIDValue) {
+        setIsFetchingCollege(true);
+        setCollegeError(null);
+        setCollege(null);
+        const fetchedCollege = await getCollegeById(collegeIDValue);
+        if (fetchedCollege) {
+          setCollege(fetchedCollege);
+          // Re-validate email if role is admin
+          if (form.getValues('role') === 'admin') {
+            trigger("email");
+          }
+        } else {
+          setCollegeError("College with this ID not found.");
+          form.setError("collegeID", { type: "manual", message: "College ID not found."});
+        }
+        setIsFetchingCollege(false);
+      }
+  };
+
 
   const handleSignup = async (values: SignupFormValues) => {
+    // Final check for college before submitting
+    const finalCollege = college || await getCollegeById(values.collegeID);
+    if (!finalCollege) {
+         toast({
+            title: "Sign up failed",
+            description: "Invalid College ID. Please check and try again.",
+            variant: "destructive",
+        });
+        return;
+    }
+
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
       
-      const college = colleges.find(c => c.collegeID === values.collegeID);
-
       await setDoc(doc(db, "users", user.uid), {
         id: user.uid,
         role: values.role,
         firstName: values.firstName,
         lastName: values.lastName || "",
         USN: values.usn,
-        collegeName: college?.name,
+        collegeName: finalCollege.name,
         collegeID: values.collegeID,
         emailPrimary: values.email,
         emailPrimaryVerified: false,
@@ -195,25 +248,28 @@ export default function SignupPage() {
                     name="collegeID"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>College</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormLabel>College ID</FormLabel>
                             <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select your college" />
-                            </SelectTrigger>
+                                <Input 
+                                    placeholder="Enter your College ID" 
+                                    required 
+                                    {...field} 
+                                    onBlur={handleCollegeIdBlur}
+                                />
                             </FormControl>
-                            <SelectContent>
-                            {colleges.map(college => (
-                                <SelectItem key={college.collegeID} value={college.collegeID}>
-                                {college.name}
-                                </SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
+
+                {isFetchingCollege && <p className="text-sm text-muted-foreground">Fetching college info...</p>}
+                
+                {college && (
+                    <div className="p-3 bg-muted rounded-md">
+                        <p className="font-semibold text-foreground">{college.name}</p>
+                    </div>
+                )}
+                
                  <FormField
                     control={form.control}
                     name="branch"
@@ -247,9 +303,6 @@ export default function SignupPage() {
                         <FormControl>
                             <Input type="email" placeholder="m@example.com" required {...field} />
                         </FormControl>
-                         <FormDescription>
-                           Admins must use their official college email.
-                        </FormDescription>
                         <FormMessage />
                         </FormItem>
                     )}
@@ -267,7 +320,7 @@ export default function SignupPage() {
                         </FormItem>
                     )}
                 />
-                <Button type="submit" className="w-full button-glow" disabled={isSubmitting}>
+                <Button type="submit" className="w-full button-glow" disabled={isSubmitting || isFetchingCollege}>
                     {isSubmitting ? "Creating Account..." : "Create an account"}
                 </Button>
             </form>
