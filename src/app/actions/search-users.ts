@@ -24,23 +24,17 @@ export async function searchUsers(searchQuery: string): Promise<SearchedUser[]> 
   const usersCollection = collection(db, 'users');
   const q = searchQuery.toLowerCase();
 
-  // Firestore doesn't support full-text search, so we query multiple fields.
   // This is a basic implementation. For production apps, a dedicated search
   // service like Algolia or Elasticsearch is recommended for better performance.
-  const nameQuery = query(usersCollection, 
-    or(
-      where('firstName', '>=', q),
-      where('firstName', '<=', q + '\uf8ff')
-    )
-  );
-
+  const firstNameQuery = query(usersCollection, where('firstName', '>=', q), where('firstName', '<=', q + '\uf8ff'));
+  const lastNameQuery = query(usersCollection, where('lastName', '>=', q), where('lastName', '<=', q + '\uf8ff'));
   const skillsQuery = query(usersCollection, where('skills', 'array-contains', q));
   const interestsQuery = query(usersCollection, where('interests', 'array-contains', q));
 
   try {
-    const [nameSnapshot, skillsSnapshot, interestsSnapshot] = await Promise.all([
-      getDocs(query(usersCollection, where('firstName', '>=', q), where('firstName', '<=', q + '\uf8ff'))),
-      getDocs(query(usersCollection, where('lastName', '>=', q), where('lastName', '<=', q + '\uf8ff'))),
+    const [firstNameSnapshot, lastNameSnapshot, skillsSnapshot, interestsSnapshot] = await Promise.all([
+      getDocs(firstNameQuery),
+      getDocs(lastNameQuery),
       getDocs(skillsQuery),
       getDocs(interestsQuery),
     ]);
@@ -63,7 +57,8 @@ export async function searchUsers(searchQuery: string): Promise<SearchedUser[]> 
         });
     }
 
-    processSnapshot(nameSnapshot);
+    processSnapshot(firstNameSnapshot);
+    processSnapshot(lastNameSnapshot);
     processSnapshot(skillsSnapshot);
     processSnapshot(interestsSnapshot);
 
