@@ -87,7 +87,7 @@ export default function AccountPage() {
     } catch (error: any) {
       toast({
         title: "Failed to Send Link",
-        description: error.message || "Could not send verification email.",
+        description: error.message || "Could not send verification email. Please check extension configuration.",
         variant: "destructive"
       });
     }

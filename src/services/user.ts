@@ -254,18 +254,35 @@ export async function getConnections(userId: string): Promise<string[]> {
 
 
 /**
- * Simulates sending a verification link for the optional email.
- * This is a placeholder. A real-world implementation would require a backend service (e.g., Firebase Cloud Function)
- * to generate a unique token and send an email. The client cannot send these emails directly.
+ * Triggers an email to be sent for optional email verification.
+ * This is achieved by creating a document in the 'mail' collection,
+ * which is monitored by the Firebase Trigger Email extension.
  * @param userId The user's ID.
  * @param email The optional email address to verify.
  */
 export async function sendOptionalEmailVerificationLink(userId: string, email: string): Promise<void> {
-  // In a real application, you would make a call to a secure backend endpoint here.
-  // The backend would handle token generation and email sending.
-  // For now, we will just log to the console to show the flow is working.
-  console.log(`Simulating sending verification link to ${email} for user ${userId}.`);
-  
-  // No error is thrown, so the UI can proceed as if the email was sent.
-  return Promise.resolve();
+  if (!userId || !email) {
+    throw new Error("User ID and email are required.");
+  }
+
+  // Generate a verification link. In a real app, this should contain a secure, unique token.
+  // For this implementation, we'll create a link that, when clicked, will update the user's
+  // verification status in the database.
+  // IMPORTANT: This is a simplified approach. A production app should use a Cloud Function
+  // to generate a secure token and handle the verification on the backend.
+  const verificationLink = `${window.location.origin}/verify-email?userId=${userId}&email=${email}&type=optional`;
+
+  await addDoc(collection(db, "mail"), {
+    to: email,
+    message: {
+      subject: "Verify your Optional Email for CampusConnect",
+      html: `
+        <h1>Welcome to CampusConnect!</h1>
+        <p>Please click the link below to verify your optional email address:</p>
+        <a href="${verificationLink}" target="_blank">Verify Email</a>
+        <p>If you did not request this, please ignore this email.</p>
+      `,
+    },
+    createdAt: serverTimestamp(),
+  });
 }
