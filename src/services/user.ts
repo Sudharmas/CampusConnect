@@ -123,10 +123,17 @@ export async function updateUser(userId: string, data: UserUpdatePayload): Promi
     }
     const userDocRef = doc(db, "users", userId);
 
-    await updateDoc(userDocRef, {
-        ...data,
-        updatedAt: serverTimestamp(),
-    });
+    const updateData: any = { ...data, updatedAt: serverTimestamp() };
+
+    // Convert comma-separated strings to arrays if they are strings
+    if (typeof data.interests === 'string') {
+        updateData.interests = data.interests.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (typeof data.skills === 'string') {
+        updateData.skills = data.skills.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    await updateDoc(userDocRef, updateData);
 }
 
 export async function updateUserOptionalEmail(userId: string, email: string): Promise<void> {
@@ -243,5 +250,3 @@ export async function getConnections(userId: string): Promise<string[]> {
     const snapshot = await getDocs(connectionsCollectionRef);
     return snapshot.docs.map(doc => doc.id);
 }
-
-    

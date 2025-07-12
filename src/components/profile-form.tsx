@@ -24,21 +24,8 @@ import { updateUser, UserUpdatePayload } from "@/services/user";
 import { auth } from "@/lib/firebase";
 import { PremiumButton } from "./ui/premium-button";
 import { Separator } from "./ui/separator";
+import { debounce } from 'lodash';
 
-// Debounce function
-const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) => {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  const debounced = (...args: Parameters<F>) => {
-    if (timeout !== null) {
-      clearTimeout(timeout);
-      timeout = null;
-    }
-    timeout = setTimeout(() => func(...args), waitFor);
-  };
-
-  return debounced;
-};
 
 const profileFormSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters.").max(50, "Full name must be at most 50 characters."),
@@ -99,21 +86,15 @@ export function ProfileForm({ initialData, isEditing, onSave, onCancel, localAva
   
   useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
-      if (type === 'change' && name) {
-        const updateData: UserUpdatePayload = {};
-        if(name === 'interests' || name === 'skills') {
-            updateData[name] = value[name]?.split(',').map(s => s.trim()).filter(Boolean);
-        } else if (name === 'firstName' || name === 'lastName' || name === 'bio') {
-            updateData[name] = value[name];
-        }
+      if (type === 'change' && name && isEditing) {
+          const changedValue = value[name as keyof typeof value];
+          const updateData = { [name]: changedValue };
 
-        if(Object.keys(updateData).length > 0) {
-            debouncedUpdate(updateData);
-        }
+          debouncedUpdate(updateData);
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, debouncedUpdate]);
+  }, [form.watch, debouncedUpdate, isEditing]);
 
 
   useEffect(() => {
