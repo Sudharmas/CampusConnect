@@ -1,6 +1,6 @@
 
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc, deleteDoc, limit } from "firebase/firestore";
+import { collection, doc, getDocs, serverTimestamp, setDoc, query, where, getDoc, updateDoc, deleteDoc, limit, addDoc } from "firebase/firestore";
 
 // User data is now stored in a top-level 'users' collection.
 export interface User {
@@ -250,4 +250,46 @@ export async function getConnections(userId: string): Promise<string[]> {
     const connectionsCollectionRef = collection(db, "users", userId, "connections");
     const snapshot = await getDocs(connectionsCollectionRef);
     return snapshot.docs.map(doc => doc.id);
+}
+
+
+/**
+ * Triggers the "Trigger Email" extension to send a verification link for the optional email.
+ * This is a simplified implementation. A real-world scenario would involve a unique token
+ * and a dedicated verification page. For now, this link just simulates the action.
+ * @param userId The user's ID.
+ * @param email The optional email address to verify.
+ */
+export async function sendOptionalEmailVerificationLink(userId: string, email: string): Promise<void> {
+  // A real implementation would generate a unique token and save it with the user's document.
+  // For now, the link is simplified and doesn't perform a real verification action on click.
+  // The action of sending the email is the main purpose here.
+  const verificationLink = `${window.location.origin}/verify-email?userId=${userId}&emailType=optional`;
+
+  try {
+    await addDoc(collection(db, "mail"), {
+      to: email,
+      message: {
+        subject: "Verify your Optional Email for CampusConnect",
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; color: #333;">
+            <h2 style="color: #007bff;">CampusConnect Email Verification</h2>
+            <p>Hello,</p>
+            <p>Please click the button below to verify this email address for your CampusConnect account.</p>
+            <a href="${verificationLink}" target="_blank" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Verify Email Address
+            </a>
+            <p>If you did not request this, please ignore this email.</p>
+            <br/>
+            <p>Thanks,</p>
+            <p>The CampusConnect Team</p>
+          </div>
+        `,
+      },
+      createdAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error("Error triggering send email extension:", error);
+    throw new Error("Could not send verification email. Please ensure the Trigger Email extension is configured correctly.");
+  }
 }

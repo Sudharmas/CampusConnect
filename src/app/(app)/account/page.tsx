@@ -10,11 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { User as FirebaseUser } from "firebase/auth";
-import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, verifyUserEmail } from "@/services/user";
-import { sendOtp, verifyOtp } from "@/services/otp";
+import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, sendOptionalEmailVerificationLink } from "@/services/user";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
@@ -32,16 +30,12 @@ export default function AccountPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState("");
-  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
-  const [otpInput, setOtpInput] = useState("");
-  const [emailToVerify, setEmailToVerify] = useState<string | null>(null);
-
+  
   const deleteConfirmationText = `delete ${campusUser?.firstName || ""}`;
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // Always get a fresh copy of the user on initial load
         await user.reload(); 
         setFirebaseUser(user);
         const fetchedUser = await getUserById(user.uid);
@@ -82,19 +76,17 @@ export default function AccountPage() {
     }
   };
 
-  const handleSendOtp = async () => {
-    if (!campusUser || !campusUser.emailOptional) return;
+  const handleSendVerificationLink = async () => {
+    if (!firebaseUser || !campusUser?.emailOptional) return;
     try {
-      await sendOtp(campusUser.emailOptional, campusUser.role);
-      setEmailToVerify(campusUser.emailOptional);
-      setIsOtpDialogOpen(true);
+      await sendOptionalEmailVerificationLink(firebaseUser.uid, campusUser.emailOptional);
       toast({
-        title: "OTP Sent",
-        description: `An OTP has been sent to ${campusUser.emailOptional}. Please check your inbox.`,
+        title: "Verification Link Sent",
+        description: `A verification link has been sent to ${campusUser.emailOptional}. Please check your inbox.`,
       });
     } catch (error: any) {
       toast({
-        title: "Failed to Send OTP",
+        title: "Failed to Send Link",
         description: error.message || "Could not send verification email.",
         variant: "destructive"
       });
@@ -106,6 +98,7 @@ export default function AccountPage() {
     setIsDeleting(true);
     try {
         await deleteUserAccount(firebaseUser.uid);
+        // Note: In a real app, you might need to re-authenticate the user before this operation.
         await firebaseUser.delete();
         toast({
             title: "Account Deleted",
@@ -123,26 +116,6 @@ export default function AccountPage() {
     }
   };
   
-  const handleVerifyOtp = async () => {
-    if (!firebaseUser || !emailToVerify) return;
-    
-    const isCorrect = await verifyOtp(emailToVerify, otpInput);
-
-    if (isCorrect) {
-        try {
-            await verifyUserEmail(firebaseUser.uid, 'optional');
-            setCampusUser(prev => prev ? { ...prev, emailOptionalVerified: true } : null);
-            toast({ title: "Success!", description: `${emailToVerify} has been verified.` });
-        } catch (error) {
-            toast({ title: "Error", description: "Could not update verification status in database.", variant: "destructive" });
-        }
-    } else {
-        toast({ title: "Invalid OTP", description: "The OTP you entered is incorrect.", variant: "destructive" });
-    }
-    setOtpInput("");
-    setIsOtpDialogOpen(false);
-  }
-
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><LoadingSpinner /></div>;
   }
@@ -196,7 +169,7 @@ export default function AccountPage() {
                           <>
                             <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
                             {!campusUser.emailOptionalVerified && (
-                                <Button onClick={handleSendOtp}>Verify</Button>
+                                <Button onClick={handleSendVerificationLink}>Verify</Button>
                             )}
                           </>
                         )}
@@ -244,7 +217,7 @@ export default function AccountPage() {
                                 className="mt-2"
                             />
                             <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setDeleteConfirmationInput("")}>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel onClick={() => setDeleteConfirmationInput("")}>Cancel</Aler      tDialogCancel>
                             <AlertDialogAction 
                                 onClick={handleDeleteAccount} 
                                 className="bg-destructive hover:bg-destructive/90"
@@ -260,30 +233,6 @@ export default function AccountPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
-          <DialogContent>
-              <DialogHeader>
-                  <DialogTitle>Verify Your Email</DialogTitle>
-                  <DialogDescription>
-                      An OTP has been sent to {emailToVerify}. Please enter it below.
-                      The code is valid for 15 minutes.
-                  </DialogDescription>
-              </DialogHeader>
-              <Input
-                value={otpInput}
-                onChange={(e) => setOtpInput(e.target.value)}
-                maxLength={6}
-                placeholder="Enter 6-digit OTP"
-              />
-              <DialogFooter>
-                  <DialogClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button onClick={handleVerifyOtp}>Verify</Button>
-              </DialogFooter>
-          </DialogContent>
-      </Dialog>
     </div>
   );
 }
