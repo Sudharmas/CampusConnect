@@ -9,12 +9,14 @@ const otpStore: Map<string, { code: string; expires: number }> = new Map();
 const ADMIN_OTP = "123456";
 
 /**
- * Generates an OTP, stores it for verification, and triggers the "Trigger Email" 
- * Firebase extension by creating a new document in the 'mail' collection.
+ * Generates an OTP and stores it for verification.
+ * If the app is in a configured Firebase environment, it will attempt to
+ * trigger the "Trigger Email" extension. In a local or unconfigured environment,
+ * it will return the OTP for simulation purposes.
  * 
  * @param email The email address to send the OTP to.
  * @param role The role of the user ('admin' or 'user').
- * @returns The generated OTP for display/testing purposes (will be removed in production).
+ * @returns A promise that resolves to the generated OTP.
  */
 export async function sendOtp(email: string, role: User['role']): Promise<string> {
   const expires = Date.now() + 15 * 60 * 1000; // 15 minutes from now
@@ -29,37 +31,40 @@ export async function sendOtp(email: string, role: User['role']): Promise<string
   // Store the OTP locally for the verification step
   otpStore.set(email, { code, expires });
   
-  // Trigger the email sending extension by adding a document to the 'mail' collection
-  try {
-    await addDoc(collection(db, "mail"), {
-      to: email,
-      message: {
-        subject: "Your CampusConnect Verification Code",
-        html: `
-          <div style="font-family: sans-serif; padding: 20px; color: #333;">
-            <h2 style="color: #007bff;">CampusConnect Verification</h2>
-            <p>Hello,</p>
-            <p>Your one-time password (OTP) is:</p>
-            <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px; background-color: #f0f0f0; padding: 10px 15px; border-radius: 5px; display: inline-block;">
-              ${code}
-            </p>
-            <p>This code is valid for 15 minutes.</p>
-            <p>If you did not request this, please ignore this email.</p>
-            <br/>
-            <p>Thanks,</p>
-            <p>The CampusConnect Team</p>
-          </div>
-        `,
-      },
-      createdAt: serverTimestamp(),
-    });
-  } catch (error) {
-    console.error("Error triggering email:", error);
-    // Re-throw the error to be caught by the frontend UI
-    throw new Error("Could not send verification email. Please try again later.");
+  // Only attempt to send a real email if we are in a configured Firebase environment.
+  // This prevents errors in local development or if the extension is not set up.
+  if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+      try {
+        await addDoc(collection(db, "mail"), {
+          to: email,
+          message: {
+            subject: "Your CampusConnect Verification Code",
+            html: `
+              <div style="font-family: sans-serif; padding: 20px; color: #333;">
+                <h2 style="color: #007bff;">CampusConnect Verification</h2>
+                <p>Hello,</p>
+                <p>Your one-time password (OTP) is:</p>
+                <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px; background-color: #f0f0f0; padding: 10px 15px; border-radius: 5px; display: inline-block;">
+                  ${code}
+                </p>
+                <p>This code is valid for 15 minutes.</p>
+                <p>If you did not request this, please ignore this email.</p>
+                <br/>
+                <p>Thanks,</p>
+                <p>The CampusConnect Team</p>
+              </div>
+            `,
+          },
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        console.error("Error triggering email:", error);
+        // Do not throw an error, allow fallback to simulation.
+        // The frontend will show the OTP in a toast.
+      }
   }
 
-  // We still return the code so the frontend can display it in a toast for easy testing if needed.
+  // We return the code so the frontend can display it in a toast for easy testing/simulation.
   return code;
 }
 

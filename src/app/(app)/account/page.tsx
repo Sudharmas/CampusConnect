@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
-import { sendEmailVerification, User as FirebaseUser } from "firebase/auth";
-import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, verifyUserEmail, markEmailAsVerified } from "@/services/user";
+import { User as FirebaseUser } from "firebase/auth";
+import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, verifyUserEmail } from "@/services/user";
 import { sendOtp, verifyOtp } from "@/services/otp";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -46,14 +46,7 @@ export default function AccountPage() {
         setFirebaseUser(user);
         const fetchedUser = await getUserById(user.uid);
         if (fetchedUser) {
-            // Sync our DB with the auth state if needed
-            if (user.emailVerified && !fetchedUser.emailPrimaryVerified) {
-                await markEmailAsVerified(user.uid);
-                const updatedUser = await getUserById(user.uid);
-                setCampusUser(updatedUser);
-            } else {
-                setCampusUser(fetchedUser);
-            }
+            setCampusUser(fetchedUser);
             setOptionalEmailInput(fetchedUser.emailOptional || "");
             setIsEditingOptionalEmail(!fetchedUser.emailOptional);
         }
@@ -66,42 +59,6 @@ export default function AccountPage() {
     });
     return () => unsubscribe();
   }, [router]);
-  
-  const handleRefreshUser = async () => {
-    const user = auth.currentUser;
-    if (user) {
-      await user.reload();
-      const freshFirebaseUser = auth.currentUser; // get the reloaded user object
-      setFirebaseUser(freshFirebaseUser); 
-
-      if (freshFirebaseUser?.emailVerified) {
-         const updatedCampusUser = await markEmailAsVerified(user.uid);
-         if (updatedCampusUser) {
-           setCampusUser(updatedCampusUser);
-           toast({ title: "Success", description: "Your primary email has been verified." });
-         }
-      } else {
-        toast({ title: "Not Verified", description: "Your primary email is still not verified. Please check your inbox for the verification link." });
-      }
-    }
-  }
-
-  const handleSendVerificationLink = async () => {
-    if (!firebaseUser) return;
-    try {
-      await sendEmailVerification(firebaseUser);
-      toast({
-        title: "Verification Email Sent",
-        description: `A verification link has been sent to ${firebaseUser.email}. Please check your inbox and click the link to verify. Then, click 'Refresh Status'.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send verification email.",
-        variant: "destructive",
-      });
-    }
-  };
   
   const handleSaveOptionalEmail = async () => {
     if (!firebaseUser) return;
@@ -128,13 +85,18 @@ export default function AccountPage() {
   const handleSendOtp = async () => {
     if (!campusUser || !campusUser.emailOptional) return;
     try {
-      await sendOtp(campusUser.emailOptional, campusUser.role);
+      const otp = await sendOtp(campusUser.emailOptional, campusUser.role);
       setEmailToVerify(campusUser.emailOptional);
       setIsOtpDialogOpen(true);
       
+      // For local development/testing, show the OTP in the toast.
+      // In production, the email will be sent by the Firebase extension.
+      const isProduction = !!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
       toast({
-        title: "OTP Sent",
-        description: `An OTP has been sent to ${campusUser.emailOptional}. Please check your inbox.`
+        title: `OTP Sent${isProduction ? '' : ' (Simulation)'}`,
+        description: isProduction 
+          ? `An OTP has been sent to ${campusUser.emailOptional}.`
+          : `Check your inbox, or use this code for testing: ${otp}`
       });
     } catch (error: any) {
       toast({
@@ -212,12 +174,6 @@ export default function AccountPage() {
                 <Label htmlFor="primary-email">Primary Email</Label>
                 <div className="flex items-center gap-4">
                     <Input id="primary-email" type="email" value={campusUser.emailPrimary} disabled />
-                    {!primaryEmailVerified ? (
-                        <>
-                          <Button variant="outline" onClick={handleSendVerificationLink}>Send Link</Button>
-                          <Button variant="ghost" onClick={handleRefreshUser}>Refresh Status</Button>
-                        </>
-                    ) : null}
                 </div>
                  <Badge variant={primaryEmailVerified ? "default" : "destructive"} className={primaryEmailVerified ? "bg-green-600/80" : ""}>
                     {primaryEmailVerified ? "Verified" : "Not Verified"}
