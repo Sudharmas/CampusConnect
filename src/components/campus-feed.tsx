@@ -161,35 +161,39 @@ export function CampusFeed() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
-      <Card className="mb-6 bg-card/70 backdrop-blur-sm">
-        <CardContent className="p-4">
-          <Textarea
-            placeholder="What's on your mind? Share an update, idea, or project..."
-            className="bg-transparent border-2 border-input focus:border-primary focus:ring-primary/50"
-            value={newPost}
-            onChange={(e) => setNewPost(e.target.value)}
-          />
-          {filePreview && (
-              <div className="mt-4 relative">
-                  <Image src={filePreview} width={600} height={400} alt="Preview" className="rounded-lg object-cover w-full h-auto" />
-                  <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={removeFile}>
-                      <X className="h-4 w-4" />
-                  </Button>
+      {currentUser && (
+        <>
+          <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*" />
+          <Card className="mb-6 bg-card/70 backdrop-blur-sm">
+            <CardContent className="p-4">
+              <Textarea
+                placeholder="What's on your mind? Share an update, idea, or project..."
+                className="bg-transparent border-2 border-input focus:border-primary focus:ring-primary/50"
+                value={newPost}
+                onChange={(e) => setNewPost(e.target.value)}
+              />
+              {filePreview && (
+                  <div className="mt-4 relative">
+                      <Image src={filePreview} width={600} height={400} alt="Preview" className="rounded-lg object-cover w-full h-auto" />
+                      <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={removeFile}>
+                          <X className="h-4 w-4" />
+                      </Button>
+                  </div>
+              )}
+              <div className="flex justify-between items-center mt-4">
+                <div className="flex gap-1 text-muted-foreground">
+                    <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Audio uploads will be available in a future update."})}><Music className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Video uploads will be available in a future update."})}><Video className="h-5 w-5" /></Button>
+                </div>
+                <Button className="button-glow" onClick={handlePost}>
+                    Post
+                </Button>
               </div>
-          )}
-          <div className="flex justify-between items-center mt-4">
-            <div className="flex gap-1 text-muted-foreground">
-                <Button variant="ghost" size="icon" onClick={() => fileInputRef.current?.click()}><ImageIcon className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Audio uploads will be available in a future update."})}><Music className="h-5 w-5" /></Button>
-                <Button variant="ghost" size="icon" onClick={() => toast({ title: "Coming Soon!", description: "Video uploads will be available in a future update."})}><Video className="h-5 w-5" /></Button>
-            </div>
-            <Button className="button-glow" onClick={handlePost}>
-                Post
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
       <div className="space-y-6">
         {posts.map((post) => (
           <Card key={post.id} className="bg-card/70 backdrop-blur-sm">
