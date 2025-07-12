@@ -1,30 +1,27 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Allow anyone to read and create user documents.
-    // This allows the signup page to work.
-    // A user can only update or delete their own document.
+  
+    // Allow anyone to create a user account during signup
     match /users/{userId} {
-      allow read, create: if true;
-      allow update, delete: if request.auth != null && request.auth.uid == userId;
-
-      // Allow authenticated users to manage their own connections.
-      match /connections/{connectedUserId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow create: if true;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow authenticated users to manage their connections
+      match /connections/{connectionId} {
+         allow read, create, delete: if request.auth != null && request.auth.uid == userId;
       }
     }
     
-    // Allow anyone to read and write to the collegedetails collection.
-    // This allows the admin page to add new colleges.
+    // Allow anyone to add or read college details.
+    // This is useful for the admin page and signup form.
     match /collegedetails/{collegeId} {
-      allow read, write: if true;
+        allow read, create: if true;
     }
 
-    // Explicitly deny client-side access to the mail collection for security.
-    match /mail/{docId} {
+    // Default deny all other collections
+    match /{document=**} {
       allow read, write: if false;
     }
   }
