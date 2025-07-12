@@ -137,27 +137,14 @@ export async function updateUser(userId: string, data: UserUpdatePayload): Promi
     await updateDoc(userDocRef, updateData);
 }
 
-export async function updateUserOptionalEmail(userId: string, email: string): Promise<void> {
+export async function updateUserOptionalEmail(userId: string, email: string, isVerified: boolean): Promise<void> {
     if (!userId) {
         throw new Error("User ID is required to update the email.");
     }
     const userDocRef = doc(db, "users", userId);
     await updateDoc(userDocRef, {
         emailOptional: email,
-        emailOptionalVerified: false, // Reset verification status on change
-        updatedAt: serverTimestamp(),
-    });
-}
-
-export async function verifyUserEmail(userId: string, emailType: 'primary' | 'optional'): Promise<void> {
-    if (!userId) {
-        throw new Error("User ID is required.");
-    }
-    const userDocRef = doc(db, "users", userId);
-    const fieldToUpdate = emailType === 'primary' ? 'emailPrimaryVerified' : 'emailOptionalVerified';
-    
-    await updateDoc(userDocRef, {
-        [fieldToUpdate]: true,
+        emailOptionalVerified: isVerified,
         updatedAt: serverTimestamp(),
     });
 }
@@ -167,15 +154,23 @@ export async function markEmailAsVerified(userId: string): Promise<User | null> 
     if (!userId) return null;
     const userDocRef = doc(db, "users", userId);
     const userDoc = await getDoc(userDocRef);
-    if(userDoc.exists() && !userDoc.data().emailPrimaryVerified) {
-        await updateDoc(userDocRef, {
-            emailPrimaryVerified: true,
-            updatedAt: serverTimestamp()
-        });
+    
+    let needsUpdate = false;
+    const updateData: any = { updatedAt: serverTimestamp() };
+
+    const data = userDoc.data();
+    if (data && !data.emailPrimaryVerified) {
+        updateData.emailPrimaryVerified = true;
+        needsUpdate = true;
+    }
+
+    if (needsUpdate) {
+        await updateDoc(userDocRef, updateData);
         const updatedDoc = await getDoc(userDocRef);
         return updatedDoc.data() as User;
     }
-    return userDoc.exists() ? userDoc.data() as User : null;
+
+    return userDoc.exists() ? data as User : null;
 }
 
 
@@ -251,40 +246,3 @@ export async function getConnections(userId: string): Promise<string[]> {
     const snapshot = await getDocs(connectionsCollectionRef);
     return snapshot.docs.map(doc => doc.id);
 }
-
-
-/**
- * Triggers an email to be sent for optional email verification.
- * This is achieved by creating a document in the 'mail' collection,
- * which is monitored by the Firebase Trigger Email extension.
- * @param userId The user's ID.
- * @param email The optional email address to verify.
- */
-export async function sendOptionalEmailVerificationLink(userId: string, email: string): Promise<void> {
-    if (!userId || !email) {
-      throw new Error("User ID and email are required.");
-    }
-  
-    const verificationLink = `${window.location.origin}/verify-email?userId=${userId}&email=${email}&type=optional`;
-  
-    try {
-      await addDoc(collection(db, "mail"), {
-        to: email,
-        message: {
-          subject: "Verify your Optional Email for CampusConnect",
-          html: `
-            <h1>Welcome to CampusConnect!</h1>
-            <p>Please click the link below to verify your optional email address:</p>
-            <a href="${verificationLink}" target="_blank">Verify Email</a>
-            <p>If you did not request this, please ignore this email.</p>
-          `,
-        },
-        createdAt: serverTimestamp(),
-      });
-    } catch(error: any) {
-        if (error.code === 'permission-denied') {
-            throw new Error("Firestore permission denied. Ensure your security rules allow writing to the 'mail' collection.");
-        }
-        throw new Error("Could not send verification email. Please ensure the Trigger Email extension is configured correctly.");
-    }
-  }

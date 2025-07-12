@@ -10,7 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { User as FirebaseUser, sendEmailVerification } from "firebase/auth";
-import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, sendOptionalEmailVerificationLink, markEmailAsVerified } from "@/services/user";
+import { getUserById, updateUserOptionalEmail, deleteUserAccount, User, markEmailAsVerified } from "@/services/user";
+import { getCollegeById } from "@/services/college";
 import LoadingSpinner from "@/components/loading-spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
@@ -55,15 +56,26 @@ export default function AccountPage() {
   }, [router]);
   
   const handleSaveOptionalEmail = async () => {
-    if (!firebaseUser) return;
+    if (!firebaseUser || !campusUser) return;
     setIsSaving(true);
+    
+    let isVerified = false;
+    let toastDescription = "Your optional email has been saved.";
+
     try {
-        await updateUserOptionalEmail(firebaseUser.uid, optionalEmailInput);
-        setCampusUser(prev => prev ? { ...prev, emailOptional: optionalEmailInput, emailOptionalVerified: false } : null);
+        const college = await getCollegeById(campusUser.collegeID);
+        if (college && optionalEmailInput.endsWith(`@${college.emailDomain}`)) {
+            isVerified = true;
+            toastDescription = "Your optional email has been saved and automatically verified.";
+        }
+
+        await updateUserOptionalEmail(firebaseUser.uid, optionalEmailInput, isVerified);
+        
+        setCampusUser(prev => prev ? { ...prev, emailOptional: optionalEmailInput, emailOptionalVerified: isVerified } : null);
         setIsEditingOptionalEmail(false);
         toast({
             title: "Optional Email Saved",
-            description: "Your optional email has been saved.",
+            description: toastDescription,
         });
     } catch (error: any) {
         toast({
@@ -92,23 +104,6 @@ export default function AccountPage() {
       })
     }
   }
-
-  const handleSendOptionalVerificationLink = async () => {
-    if (!firebaseUser || !campusUser?.emailOptional) return;
-    try {
-      await sendOptionalEmailVerificationLink(firebaseUser.uid, campusUser.emailOptional);
-      toast({
-        title: "Verification Link Sent",
-        description: `A verification link has been sent to ${campusUser.emailOptional}. Please check your inbox.`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Failed to Send Link",
-        description: error.message || "Could not send verification email.",
-        variant: "destructive"
-      });
-    }
-  };
 
   const handleDeleteAccount = async () => {
     if (!firebaseUser || deleteConfirmationInput !== deleteConfirmationText) return;
@@ -188,12 +183,7 @@ export default function AccountPage() {
                     <div className="flex items-center gap-4">
                         <Input id="optional-email-display" type="email" value={campusUser.emailOptional || ""} disabled />
                         {campusUser.emailOptional && (
-                          <>
-                            <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
-                            {!campusUser.emailOptionalVerified && (
-                                <Button onClick={handleSendOptionalVerificationLink}>Verify</Button>
-                            )}
-                          </>
+                          <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
                         )}
                         {!campusUser.emailOptional && (
                            <Button onClick={() => setIsEditingOptionalEmail(true)}>Add Email</Button>
