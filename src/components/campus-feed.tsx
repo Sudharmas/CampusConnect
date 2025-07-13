@@ -14,7 +14,7 @@ import LoadingLink from '@/components/ui/loading-link';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from './ui/separator';
-import LoadingSpinner from '../loading-spinner';
+import LoadingSpinner from '@/components/loading-spinner';
 
 
 interface Post {
