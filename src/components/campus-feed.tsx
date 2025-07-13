@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getUserById, User, getAllUsers } from '@/services/user';
 import { auth } from '@/lib/firebase';
 import LoadingLink from '@/components/ui/loading-link';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from './ui/separator';
 import LoadingSpinner from '@/components/loading-spinner';
