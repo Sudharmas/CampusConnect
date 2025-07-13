@@ -59,7 +59,7 @@ export async function createUser({
     collegeName,
     collegeID,
     emailPrimary,
-    emailPrimaryVerified: false,
+    emailPrimaryVerified: true, // Auto-verified for Google Sign-in or assumed for email
     emailOptional: "",
     emailOptionalVerified: false,
     branch,
@@ -83,6 +83,19 @@ export async function getUserById(userId: string): Promise<User | null> {
     } else {
         return null;
     }
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+    if (!email) return null;
+    const usersCollectionRef = collection(db, 'users');
+    const q = query(usersCollectionRef, where("emailPrimary", "==", email), limit(1));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        return { id: userDoc.id, ...userDoc.data() } as User;
+    }
+    return null;
 }
 
 export async function getUserByUsn(usn: string): Promise<User | null> {

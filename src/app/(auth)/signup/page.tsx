@@ -12,12 +12,12 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
 import { getCollegeById, College } from '@/services/college';
-import { createUser, checkIfUserExists } from '@/services/user';
+import { createUser, checkIfUserExists, getUserByEmail } from '@/services/user';
 import LoadingLink from '@/components/ui/loading-link';
 
 const signupFormSchema = z.object({
@@ -40,20 +40,13 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [college, setCollege] = useState<College | null>(null);
   const [isFetchingCollege, setIsFetchingCollege] = useState(false);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
-
-  useEffect(() => {
-    if (shouldRedirect) {
-      const timer = setTimeout(() => {
-        router.push('/login');
-      }, 2000); // Redirect after 2 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [shouldRedirect, router]);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: async (data, context, options) => {
-      const result = await zodResolver(signupFormSchema)(data, context, options);
+      // For Google Sign In, we don't need password validation
+      const schema = data.password ? signupFormSchema : signupFormSchema.omit({ password: true });
+      const result = await zodResolver(schema)(data, context, options);
 
       if (result.errors.collegeID || result.errors.email || result.errors.role) {
         return result;
@@ -105,7 +98,7 @@ export default function SignupPage() {
         const fetchedCollege = await getCollegeById(collegeIDValue);
         if (fetchedCollege) {
           setCollege(fetchedCollege);
-          clearErrors("collegeID"); // Clear error on success
+          clearErrors("collegeID"); 
           if (form.getValues('role') === 'admin') {
             trigger("email");
           }
@@ -119,7 +112,6 @@ export default function SignupPage() {
 
   const handleSignup = async (values: SignupFormValues) => {
     try {
-      // 1. Check if user with USN already exists
       const { usnExists } = await checkIfUserExists(values.usn);
       if (usnExists) {
         toast({
@@ -130,7 +122,6 @@ export default function SignupPage() {
         return;
       }
 
-      // Re-fetch college details on submit to be absolutely sure.
       const finalCollege = await getCollegeById(values.collegeID);
       if (!finalCollege) {
          toast({
@@ -140,24 +131,40 @@ export default function SignupPage() {
         });
         return;
       }
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-      
-      await createUser({
-        id: user.uid,
-        role: values.role,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        USN: values.usn,
-        collegeName: finalCollege.name, 
-        collegeID: values.collegeID,
-        emailPrimary: values.email,
-        branch: values.branch,
-      });
 
-      // Sign in the user immediately after creating the account
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const currentUser = auth.currentUser;
+      if (currentUser && currentUser.email === values.email) {
+          // This is a Google Sign-In user completing their profile
+          await createUser({
+            id: currentUser.uid,
+            role: values.role,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            USN: values.usn,
+            collegeName: finalCollege.name,
+            collegeID: values.collegeID,
+            emailPrimary: values.email,
+            branch: values.branch,
+          });
+      } else {
+        // This is a standard email/password signup
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const user = userCredential.user;
+        
+        await createUser({
+          id: user.uid,
+          role: values.role,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          USN: values.usn,
+          collegeName: finalCollege.name, 
+          collegeID: values.collegeID,
+          emailPrimary: values.email,
+          branch: values.branch,
+        });
+
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+      }
 
       toast({
           title: "Account Created!",
@@ -178,7 +185,57 @@ export default function SignupPage() {
             variant: "destructive",
         })
     }
-  }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleSigningIn(true);
+    try {
+      const userCredential: UserCredential = await signInWithPopup(auth, googleProvider);
+      const user = userCredential.user;
+
+      if (!user.email) {
+          throw new Error("Could not retrieve email from Google account.");
+      }
+
+      // Check if user exists in Firestore
+      const campusUser = await getUserByEmail(user.email);
+      if (campusUser) {
+          // User exists, log them in and redirect
+          toast({
+              title: "Welcome Back!",
+              description: "You've been successfully logged in.",
+          });
+          router.push('/dashboard');
+      } else {
+          // New user, pre-fill form
+          const [firstName, ...lastNameParts] = (user.displayName || "").split(" ");
+          form.reset({
+              ...form.getValues(),
+              firstName: firstName,
+              lastName: lastNameParts.join(" "),
+              email: user.email,
+              password: "" // Clear password field
+          });
+          toast({
+              title: "Welcome!",
+              description: "Please complete your profile details to finish signing up.",
+          });
+      }
+
+    } catch (error: any) {
+        let errorMessage = "Failed to sign in with Google. Please try again.";
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            errorMessage = "An account with this email already exists using a different sign-in method.";
+        }
+        toast({
+            title: "Google Sign-In Failed",
+            description: errorMessage,
+            variant: "destructive",
+        });
+    } finally {
+        setIsGoogleSigningIn(false);
+    }
+  };
 
   return (
     <div className="signup-container">
@@ -314,7 +371,7 @@ export default function SignupPage() {
                 render={({ field }) => (
                     <FormItem>
                     <FormControl>
-                        <Input type="email" placeholder="E-mail" required {...field} className="input" />
+                        <Input type="email" placeholder="E-mail" required {...field} className="input" disabled={!!auth.currentUser} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -326,14 +383,14 @@ export default function SignupPage() {
                 render={({ field }) => (
                     <FormItem>
                     <FormControl>
-                        <Input type="password" placeholder="Password" required {...field} className="input" />
+                        <Input type="password" placeholder="Password" required {...field} className="input" disabled={!!auth.currentUser} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
             />
             
-            <Button type="submit" className="signup-new-button" disabled={isSubmitting || isFetchingCollege}>
+            <Button type="submit" className="signup-new-button" disabled={isSubmitting || isFetchingCollege || isGoogleSigningIn}>
               {isSubmitting ? "Creating Account..." : "Sign Up"}
             </Button>
             <div className="mt-4 text-center text-sm">
@@ -347,7 +404,7 @@ export default function SignupPage() {
         <div className="social-account-container">
             <span className="title">Or Sign up with</span>
             <div className="social-accounts">
-                <button className="social-button google">
+                <button className="social-button google" onClick={handleGoogleSignIn} disabled={isGoogleSigningIn}>
                     <svg className="svg" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 488 512">
                     <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
                     </svg>
