@@ -1,0 +1,161 @@
+.login-container-new {
+  max-width: 350px;
+  width: 100%;
+  background: hsl(var(--card) / 0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 2rem; /* 40px -> 2rem */
+  padding: 25px 35px;
+  border: 1px solid hsl(var(--border));
+  box-shadow: hsl(var(--primary) / 0.1) 0px 30px 30px -20px;
+  margin: 20px;
+}
+
+.login-heading-new {
+  text-align: center;
+  font-weight: 900;
+  font-size: 30px;
+  font-family: 'Space Grotesk', sans-serif;
+  color: hsl(var(--primary));
+  text-shadow: 0 0 8px hsl(var(--primary) / 0.8);
+}
+
+.login-form-new {
+  margin-top: 20px;
+}
+
+.login-form-new .input-new {
+  width: 100%;
+  background: hsl(var(--input));
+  border: 1px solid hsl(var(--border));
+  padding: 15px 20px;
+  border-radius: 20px;
+  margin-top: 15px;
+  box-shadow: hsl(var(--primary) / 0.05) 0px 10px 10px -5px;
+  border-inline: 2px solid transparent;
+  color: hsl(var(--foreground));
+}
+
+.login-form-new .input-new::-moz-placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.login-form-new .input-new::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.login-form-new .input-new:focus {
+  outline: none;
+  border-inline: 2px solid hsl(var(--ring));
+}
+
+.login-form-new .forgot-password-new {
+  display: block;
+  margin-top: 10px;
+  text-align: right;
+  padding-right: 5px;
+}
+
+.login-form-new .forgot-password-new a {
+  font-size: 11px;
+  color: hsl(var(--primary));
+  text-decoration: none;
+}
+.login-form-new .forgot-password-new a:hover {
+    text-decoration: underline;
+}
+
+.login-form-new .submit-button-new {
+  display: block;
+  width: 100%;
+  font-weight: bold;
+  background: linear-gradient(45deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  color: hsl(var(--primary-foreground));
+  padding-block: 15px;
+  margin: 20px auto 0 auto;
+  border-radius: 20px;
+  box-shadow: hsl(var(--primary) / 0.2) 0px 20px 10px -15px;
+  border: none;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.login-form-new .submit-button-new:hover {
+  transform: scale(1.03);
+  box-shadow: hsl(var(--primary) / 0.3) 0px 23px 10px -20px;
+}
+
+.login-form-new .submit-button-new:active {
+  transform: scale(0.95);
+  box-shadow: hsl(var(--primary) / 0.4) 0px 15px 10px -10px;
+}
+
+.login-form-new .submit-button-new:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+
+.social-account-container-new {
+  margin-top: 25px;
+}
+
+.social-account-container-new .title-new {
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  color: hsl(var(--muted-foreground));
+}
+
+.social-account-container-new .social-accounts-new {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 5px;
+}
+
+.social-account-container-new .social-accounts-new .social-button-new {
+  background: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
+  padding: 5px;
+  border-radius: 50%;
+  width: 45px;
+  aspect-ratio: 1;
+  display: grid;
+  place-content: center;
+  box-shadow: hsl(var(--primary) / 0.1) 0px 12px 10px -8px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.social-account-container-new .social-accounts-new .social-button-new .svg-new {
+  fill: hsl(var(--secondary-foreground));
+  margin: auto;
+   width: 1.25em;
+  height: 1.25em;
+}
+
+.social-account-container-new .social-accounts-new .social-button-new:hover {
+  transform: scale(1.1);
+  border-color: hsl(var(--primary));
+}
+
+.social-account-container-new .social-accounts-new .social-button-new:active {
+  transform: scale(0.95);
+}
+
+.signup-link-new {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.signup-link-new a {
+  text-decoration: none;
+  color: hsl(var(--primary));
+  font-weight: bold;
+}
+.signup-link-new a:hover {
+    text-decoration: underline;
+}

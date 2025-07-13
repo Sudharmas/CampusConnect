@@ -4,6 +4,7 @@ import './globals.css';
 import './premium-button.css';
 import './signup-button.css';
 import './login-button.css';
+import './login-new.css';
 import './search-bar.css';
 import './loader.css';
 import './campus-feed-card.css';

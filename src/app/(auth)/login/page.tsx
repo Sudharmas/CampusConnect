@@ -1,37 +1,26 @@
 
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { EyeOpenIcon } from '@/components/icons/eye-open';
-import { EyeClosedIcon } from '@/components/icons/eye-closed';
-import { cn } from '@/lib/utils';
-import { getUserByUsn } from '@/services/user';
+import { signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
+import { auth, googleProvider } from '@/lib/firebase';
+import { getUserByUsn, getUserByEmail } from '@/services/user';
+import { useToast } from '@/hooks/use-toast';
 import LoadingLink from '@/components/ui/loading-link';
+import { cn } from '@/lib/utils';
+
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // If it's not an email, assume it's a USN and force uppercase.
     if (!value.includes('@')) {
       setIdentifier(value.toUpperCase());
     } else {
@@ -45,9 +34,8 @@ export default function LoginPage() {
     setError(null);
     try {
       let email = identifier;
-      // Check if the identifier is a USN (does not contain '@')
       if (!identifier.includes('@')) {
-          const usn = identifier.toUpperCase(); // Ensure it's uppercase before search
+          const usn = identifier.toUpperCase();
           const user = await getUserByUsn(usn);
           if (user) {
               email = user.emailPrimary;
@@ -58,81 +46,102 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
     } catch (error: any) {
-      // Set a generic error message for security
       setError('Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <Card className="mx-auto max-w-sm w-full bg-card/70 backdrop-blur-sm">
-      <CardHeader>
-        <CardTitle className="text-2xl font-headline text-glow">Login</CardTitle>
-        <CardDescription>
-          Enter your email or USN to login to your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleLogin} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="identifier">Email or USN</Label>
-            <Input
-              id="identifier"
-              type="text"
-              placeholder="m@example.com or 1AB23CD001"
-              required
-              value={identifier}
-              onChange={handleIdentifierChange}
-              disabled={isLoading}
-              className={cn(error && "border-destructive animate-shake")}
-            />
-          </div>
-          <div className="grid gap-2">
-            <div className="flex items-center">
-              <Label htmlFor="password">Password</Label>
-            </div>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                className={cn("pr-10", error && "border-destructive animate-shake")}
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOpenIcon className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <EyeClosedIcon className="h-5 w-5 text-muted-foreground" />
-                )}
-              </button>
-            </div>
-          </div>
+  const handleGoogleSignIn = () => {
+    setIsLoading(true);
+    setError(null);
+    signInWithPopup(auth, googleProvider)
+      .then(async (userCredential: UserCredential) => {
+        const user = userCredential.user;
+        if (!user.email) {
+          throw new Error("Could not retrieve email from Google account.");
+        }
+        const campusUser = await getUserByEmail(user.email);
+        if (!campusUser) {
+           await auth.signOut(); // Sign out the user from Firebase auth
+           throw new Error("No account found with this Google account. Please sign up first.");
+        }
+        toast({
+          title: "Welcome Back!",
+          description: "You've been successfully logged in.",
+        });
+        router.push('/dashboard');
+      })
+      .catch((error: any) => {
+        let errorMessage = "Failed to sign in with Google. Please try again.";
+         if (error.code === 'auth/popup-blocked') {
+            errorMessage = "Google Sign-In popup was blocked by the browser. Please allow popups for this site.";
+        } else {
+            errorMessage = error.message;
+        }
+        setError(errorMessage);
+        toast({
+            title: "Google Sign-In Failed",
+            description: errorMessage,
+            variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  };
 
-          {error && (
-            <p className="text-sm text-destructive animate-shake">{error}</p>
-          )}
-          <div className="login-container">
-             <Button type="submit" className="login-button" disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Login'}
-            </Button>
-          </div>
-        </form>
-        <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{' '}
-          <LoadingLink href="/signup" className="underline text-primary">
-            Sign up
-          </LoadingLink>
+  return (
+    <div className="login-container-new">
+      <div className="login-heading-new">Login</div>
+      <form onSubmit={handleLogin} className="login-form-new">
+        <input
+          required
+          className={cn("input-new", error && "border-destructive animate-shake")}
+          type="text"
+          name="identifier"
+          id="identifier"
+          placeholder="Email or USN"
+          value={identifier}
+          onChange={handleIdentifierChange}
+          disabled={isLoading}
+        />
+        <input
+          required
+          className={cn("input-new", error && "border-destructive animate-shake")}
+          type="password"
+          name="password"
+          id="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
+        />
+        <span className="forgot-password-new">
+            <LoadingLink href="/forgot-password">Forgot Password?</LoadingLink>
+        </span>
+        
+        {error && (
+            <p className="mt-2 text-sm text-center text-destructive animate-shake">{error}</p>
+        )}
+
+        <button className="submit-button-new" type="submit" disabled={isLoading}>
+          {isLoading ? 'Logging in...' : 'Login'}
+        </button>
+      </form>
+      <div className="social-account-container-new">
+        <span className="title-new">Or Sign in with</span>
+        <div className="social-accounts-new">
+          <button className="social-button-new google" onClick={handleGoogleSignIn} disabled={isLoading}>
+            <svg className="svg-new" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 488 512">
+              <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+            </svg>
+          </button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      <span className="signup-link-new">
+        Don't have an account? <LoadingLink href="/signup">Sign up</LoadingLink>
+      </span>
+    </div>
   );
 }
