@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import { debounce } from 'lodash';
+import LoadingLink from '@/components/ui/loading-link';
 
 function SearchBar({ onSearch, isLoading }: { onSearch: (query: string) => void; isLoading: boolean }) {
   const [query, setQuery] = useState('');
@@ -119,7 +120,9 @@ export default function PartnerFinderPage() {
                       </Avatar>
                       <div>
                         <CardTitle className="text-lg">{user.firstName} {user.lastName}</CardTitle>
-                        <Button variant="link" className="p-0 h-auto text-primary">View Profile</Button>
+                        <Button variant="link" className="p-0 h-auto text-primary" asChild>
+                          <LoadingLink href={`/profile/${user.id}`}>View Profile</LoadingLink>
+                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -139,7 +142,9 @@ export default function PartnerFinderPage() {
                                 )) : <p className="text-sm text-muted-foreground/70">No interests listed.</p>}
                             </div>
                         </div>
-                        <Button className="w-full mt-6 button-glow">Connect</Button>
+                        <Button className="w-full mt-6 button-glow" asChild>
+                           <LoadingLink href={`/profile/${user.id}`}>Connect</LoadingLink>
+                        </Button>
                     </CardContent>
                   </Card>
                 ))}

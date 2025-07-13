@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageIcon, Music, Video, X, Heart, MessageSquare } from 'lucide-react';
 import Image from "next/image";
 import { useToast } from '@/hooks/use-toast';
-import { addConnection, getUserById, User } from '@/services/user';
+import { getUserById, User } from '@/services/user';
 import { auth } from '@/lib/firebase';
 import LoadingLink from '@/components/ui/loading-link';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -67,7 +67,7 @@ const initialPosts = [
 type Post = typeof initialPosts[0];
 type Comment = { user: string; text: string };
 
-const PostCard = ({ post, onConnect }: { post: Post, onConnect: (authorId: string, authorName: string) => void }) => {
+const PostCard = ({ post }: { post: Post }) => {
   const [likes, setLikes] = useState(post.likes);
   const [comments, setComments] = useState<Comment[]>(post.comments);
   const [newComment, setNewComment] = useState("");
@@ -87,7 +87,6 @@ const PostCard = ({ post, onConnect }: { post: Post, onConnect: (authorId: strin
   
   return (
     <div className="feed-post-main relative">
-      <div className="feed-post-card_back"></div>
       <div className="feed-post-card">
         <div className="fl">
           <Dialog>
@@ -136,7 +135,9 @@ const PostCard = ({ post, onConnect }: { post: Post, onConnect: (authorId: strin
                     </LoadingLink>
                 ) : (
                     <div className="flex w-full justify-between items-center">
-                        <button className="feed-post-action-button connect" onClick={() => onConnect(post.authorId, post.author)} />
+                         <LoadingLink href={`/profile/${post.authorId}`} className='w-full mr-2'>
+                           <button className="feed-post-action-button connect">Connect</button>
+                        </LoadingLink>
                         <button className="feed-post-action-button share" />
                     </div>
                 )}
@@ -280,26 +281,6 @@ export function CampusFeed() {
     });
   };
 
-  const handleConnect = async (authorId: string, authorName: string) => {
-    if (!auth.currentUser) {
-        toast({ title: "Please log in", description: "You need to be logged in to connect with users.", variant: "destructive" });
-        return;
-    }
-    try {
-        await addConnection(auth.currentUser.uid, authorId);
-        toast({
-            title: "Connected!",
-            description: `You are now connected with ${authorName}. They will be prioritized in your Partner Finder results.`,
-        });
-    } catch (error: any) {
-        toast({
-            title: "Error",
-            description: error.message || "Failed to connect.",
-            variant: "destructive",
-        });
-    }
-  };
-
   return (
     <div className="max-w-xl mx-auto">
       {currentUser && (
@@ -344,7 +325,7 @@ export function CampusFeed() {
       )}
       <div className="space-y-12">
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} onConnect={handleConnect} />
+          <PostCard key={post.id} post={post} />
         ))}
       </div>
     </div>
