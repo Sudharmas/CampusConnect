@@ -83,19 +83,19 @@ export default function LoginPage() {
         router.push('/dashboard');
       })
       .catch((error: any) => {
-        let errorMessage = "Failed to sign in with Google. Please try again.";
-         if (error.code === 'auth/popup-blocked') {
-            errorMessage = "Google Sign-In popup was blocked by the browser. Please allow popups for this site.";
-        } else if (error.code === 'auth/account-exists-with-different-credential') {
-            errorMessage = "An account with this email already exists. Please sign in with your original method.";
-        } else if (error.message !== "No account found with this Google account. Please sign up first.") {
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            setError("An account with this email already exists. Please sign in with your original method.");
+        } else if (error.code === 'auth/popup-blocked') {
+            setError("Google Sign-In popup was blocked by the browser. Please allow popups for this site.");
+        } else if (error.message.includes("No account found")) {
+            setError(error.message);
+        } else {
            toast({
                 title: "Google Sign-In Failed",
-                description: errorMessage,
+                description: "Failed to sign in with Google. Please try again.",
                 variant: "destructive",
             });
         }
-        setError(errorMessage);
       })
       .finally(() => {
         setIsLoading(false);
