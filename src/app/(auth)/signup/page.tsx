@@ -42,7 +42,7 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [college, setCollege] = useState<College | null>(null);
   const [isFetchingCollege, setIsFetchingCollege] = useState(false);
-  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(true);
   const isMobile = useIsMobile();
 
 
@@ -234,7 +234,6 @@ export default function SignupPage() {
   useEffect(() => {
     const handleRedirectResult = async () => {
         try {
-            setIsSigningIn(true);
             const userCredential = await getRedirectResult(auth);
             if (userCredential) {
                 await processSocialSignIn(userCredential);
