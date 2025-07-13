@@ -187,55 +187,53 @@ export default function SignupPage() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setIsGoogleSigningIn(true);
-    try {
-      const userCredential: UserCredential = await signInWithPopup(auth, googleProvider);
-      const user = userCredential.user;
-
-      if (!user.email) {
+    signInWithPopup(auth, googleProvider)
+      .then(async (userCredential: UserCredential) => {
+        const user = userCredential.user;
+        if (!user.email) {
           throw new Error("Could not retrieve email from Google account.");
-      }
-
-      // Check if user exists in Firestore
-      const campusUser = await getUserByEmail(user.email);
-      if (campusUser) {
-          // User exists, log them in and redirect
+        }
+        const campusUser = await getUserByEmail(user.email);
+        if (campusUser) {
           toast({
-              title: "Welcome Back!",
-              description: "You've been successfully logged in.",
+            title: "Welcome Back!",
+            description: "You've been successfully logged in.",
           });
           router.push('/dashboard');
-      } else {
-          // New user, pre-fill form
+        } else {
           const [firstName, ...lastNameParts] = (user.displayName || "").split(" ");
           form.reset({
-              ...form.getValues(),
-              firstName: firstName,
-              lastName: lastNameParts.join(" "),
-              email: user.email,
-              password: "" // Clear password field
+            ...form.getValues(),
+            firstName: firstName,
+            lastName: lastNameParts.join(" "),
+            email: user.email,
+            password: ""
           });
           toast({
-              title: "Welcome!",
-              description: "Please complete your profile details to finish signing up.",
+            title: "Welcome!",
+            description: "Please complete your profile details to finish signing up.",
           });
-      }
-
-    } catch (error: any) {
+        }
+      })
+      .catch((error: any) => {
         console.error("Google Sign-In Error:", error);
         let errorMessage = "Failed to sign in with Google. Please try again.";
         if (error.code === 'auth/account-exists-with-different-credential') {
             errorMessage = "An account with this email already exists using a different sign-in method.";
+        } else if (error.code === 'auth/popup-blocked') {
+            errorMessage = "Google Sign-In popup was blocked by the browser. Please allow popups for this site.";
         }
         toast({
             title: "Google Sign-In Failed",
             description: errorMessage,
             variant: "destructive",
         });
-    } finally {
+      })
+      .finally(() => {
         setIsGoogleSigningIn(false);
-    }
+      });
   };
 
   return (
