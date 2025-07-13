@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getUserById, User } from '@/services/user';
 import LoadingSpinner from '@/components/loading-spinner';
@@ -11,21 +12,22 @@ import { Button } from '@/components/ui/button';
 import LoadingLink from '@/components/ui/loading-link';
 import { ArrowLeft } from 'lucide-react';
 
-export default function UserProfilePage({ params }: { params: { userId: string } }) {
+export default function UserProfilePage() {
   const [userData, setUserData] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { userId } = params;
+  const params = useParams();
+  const userId = params.userId as string;
 
   useEffect(() => {
     async function fetchUser() {
       setIsLoading(true);
-      const fetchedUser = await getUserById(userId);
-      setUserData(fetchedUser);
+      if (userId) {
+        const fetchedUser = await getUserById(userId);
+        setUserData(fetchedUser);
+      }
       setIsLoading(false);
     }
-    if (userId) {
-      fetchUser();
-    }
+    fetchUser();
   }, [userId]);
 
   if (isLoading) {
