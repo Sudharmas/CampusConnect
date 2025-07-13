@@ -223,6 +223,7 @@ export default function SignupPage() {
       }
 
     } catch (error: any) {
+        console.error("Google Sign-In Error:", error);
         let errorMessage = "Failed to sign in with Google. Please try again.";
         if (error.code === 'auth/account-exists-with-different-credential') {
             errorMessage = "An account with this email already exists using a different sign-in method.";
