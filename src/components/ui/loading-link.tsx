@@ -18,16 +18,19 @@ const LoadingLink = React.forwardRef<HTMLAnchorElement, LoadingLinkProps>(
     const pathname = usePathname();
 
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-      // Check if the link's destination is the same as the current page
-      const isSamePage = href === pathname;
+      const isSamePage = href.toString() === pathname;
 
-      if (!isSamePage) {
-        showLoader();
+      if (isSamePage) {
+        // If it's the same page, do not show the loader and prevent default navigation.
+        // This stops the infinite spinner issue.
+        if (href.toString().startsWith('#')) {
+            // Allow default behavior for hash links on the same page
+        } else {
+            e.preventDefault();
+        }
       } else {
-        // For same-page clicks, briefly show and then hide the loader
-        // to acknowledge the click without getting stuck.
+        // Only show loader for navigations to a different page.
         showLoader();
-        setTimeout(() => hideLoader(), 100); 
       }
       
       if (onClick) {
