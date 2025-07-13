@@ -63,8 +63,10 @@ export default function LoginPage() {
         }
         const campusUser = await getUserByEmail(user.email);
         if (!campusUser) {
-           await auth.signOut(); // Sign out the user from Firebase auth
-           throw new Error("No account found with this Google account. Please sign up first.");
+           await auth.signOut();
+           setError("No account found with this Google account. Please sign up first.");
+           setIsLoading(false);
+           return;
         }
         toast({
           title: "Welcome Back!",
@@ -76,15 +78,14 @@ export default function LoginPage() {
         let errorMessage = "Failed to sign in with Google. Please try again.";
          if (error.code === 'auth/popup-blocked') {
             errorMessage = "Google Sign-In popup was blocked by the browser. Please allow popups for this site.";
-        } else {
-            errorMessage = error.message;
+        } else if (error.message !== "No account found with this Google account. Please sign up first.") {
+           toast({
+                title: "Google Sign-In Failed",
+                description: errorMessage,
+                variant: "destructive",
+            });
         }
         setError(errorMessage);
-        toast({
-            title: "Google Sign-In Failed",
-            description: errorMessage,
-            variant: "destructive",
-        });
       })
       .finally(() => {
         setIsLoading(false);
@@ -94,6 +95,9 @@ export default function LoginPage() {
   return (
     <div className="login-container-new">
       <div className="login-heading-new">Login</div>
+      {error && (
+        <p className="mt-4 text-sm text-center text-destructive animate-shake">{error}</p>
+      )}
       <form onSubmit={handleLogin} className="login-form-new">
         <input
           required
@@ -121,10 +125,6 @@ export default function LoginPage() {
             <LoadingLink href="/forgot-password">Forgot Password?</LoadingLink>
         </span>
         
-        {error && (
-            <p className="mt-2 text-sm text-center text-destructive animate-shake">{error}</p>
-        )}
-
         <button className="submit-button-new" type="submit" disabled={isLoading}>
           {isLoading ? 'Logging in...' : 'Login'}
         </button>
