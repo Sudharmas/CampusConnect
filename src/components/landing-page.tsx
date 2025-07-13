@@ -9,7 +9,7 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import AnimatedBackground from './ui/animated-background';
 import LoadingLink from './ui/loading-link';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 export function LandingPage() {
   const router = useRouter();
@@ -85,6 +85,9 @@ export function LandingPage() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] bg-background/90 backdrop-blur-sm">
+                    <SheetHeader>
+                      <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                    </SheetHeader>
                     <nav className="grid gap-6 text-lg font-medium mt-12">
                          <SheetClose asChild>
                             <LoadingLink href="#features" className="hover:text-primary" prefetch={false}>
