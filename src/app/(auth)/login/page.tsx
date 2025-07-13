@@ -3,13 +3,14 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, UserCredential, getRedirectResult, signInWithRedirect } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '@/lib/firebase';
 import { getUserByUsn, getUserByEmail } from '@/services/user';
 import { useToast } from '@/hooks/use-toast';
 import LoadingLink from '@/components/ui/loading-link';
 import { cn } from '@/lib/utils';
 import LoadingSpinner from '@/components/loading-spinner';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 
 export default function LoginPage() {
@@ -18,17 +19,64 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
+    const processRedirectResult = async () => {
+      try {
+        const userCredential = await getRedirectResult(auth);
+        if (userCredential) {
+          // User successfully signed in via redirect.
+          const user = userCredential.user;
+          if (!user.email) {
+            throw new Error("Could not retrieve email from social account.");
+          }
+          const campusUser = await getUserByEmail(user.email);
+          if (!campusUser) {
+             await auth.signOut();
+             // Redirect to signup with pre-filled info
+             const params = new URLSearchParams();
+             params.set('error', 'no-account');
+             params.set('email', user.email);
+             if (user.displayName) params.set('name', user.displayName);
+             router.push(`/signup?${params.toString()}`);
+             return; // Stop further execution
+          }
+          toast({
+            title: "Welcome Back!",
+            description: "You've been successfully logged in.",
+          });
+          router.push('/dashboard');
+        } else {
+            // No redirect result, probably a normal page load
+            setIsLoading(false);
+        }
+      } catch (error: any) {
+        console.error("Redirect Sign-In Error:", error);
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            setError("An account with this email already exists. Please sign in with your original method.");
+        } else {
+            toast({
+                title: "Sign-In Failed",
+                description: "Failed to sign in. Please try again.",
+                variant: "destructive",
+            });
+        }
+        setIsLoading(false);
+      }
+    };
+
+    processRedirectResult();
+    
     const errorParam = searchParams.get('error');
     if (errorParam === 'account-exists') {
       setError('An account with this email already exists. Please login.');
-      // A small trick to remove the error from the URL without a full page reload.
       window.history.replaceState(null, '', '/login');
     }
-  }, [searchParams]);
+
+  }, [router, toast, searchParams]);
 
   const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -66,6 +114,11 @@ export default function LoginPage() {
   const handleSocialSignIn = async (provider: typeof googleProvider | typeof githubProvider) => {
     setIsLoading(true);
     setError(null);
+
+    if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return; // Redirect will happen, so no more code will execute here
+    }
 
     try {
         const userCredential: UserCredential = await signInWithPopup(auth, provider);
@@ -106,6 +159,14 @@ export default function LoginPage() {
     }
   };
 
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="login-container-new">
