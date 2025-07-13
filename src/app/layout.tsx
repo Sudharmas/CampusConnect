@@ -7,6 +7,7 @@ import './login-button.css';
 import './search-bar.css';
 import './loader.css';
 import './campus-feed-card.css';
+import './signup-new.css';
 import { LoadingProvider } from '@/context/loading-context';
 
 export const metadata: Metadata = {
