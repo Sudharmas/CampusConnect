@@ -191,9 +191,6 @@
   position: relative;
 }
 
-.feed-post-action-button.connect::before {
-  content: "Connect";
-}
 .feed-post-action-button.share::before {
   content: "Share";
 }
