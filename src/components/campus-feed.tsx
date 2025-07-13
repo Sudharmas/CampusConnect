@@ -8,63 +8,30 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ImageIcon, Music, Video, X, Heart, MessageSquare } from 'lucide-react';
 import Image from "next/image";
 import { useToast } from '@/hooks/use-toast';
-import { getUserById, User } from '@/services/user';
+import { getUserById, User, getAllUsers } from '@/services/user';
 import { auth } from '@/lib/firebase';
 import LoadingLink from '@/components/ui/loading-link';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Separator } from './ui/separator';
+import LoadingSpinner from '../loading-spinner';
 
-const initialPosts = [
-  {
-    id: 1,
-    authorId: "user2",
-    author: 'Alice Johnson',
-    avatar: 'https://placehold.co/40x40.png?text=AJ',
-    handle: '@alicej',
-    time: '2h ago',
-    content: 'Just had a breakthrough on my thesis project! The future of quantum computing is looking bright. Anyone interested in a discussion on qubit stability?',
-    image: 'https://placehold.co/600x400.png',
-    dataAiHint: 'quantum computer',
-    likes: 12,
-    comments: [
-      { user: 'Bob', text: 'Sounds fascinating!' },
-      { user: 'Charlie', text: 'I\'d love to hear more.' },
-    ],
-    views: 152,
-    isProject: true,
-  },
-  {
-    id: 2,
-    authorId: "user3",
-    author: 'Bob Williams',
-    avatar: 'https://placehold.co/40x40.png?text=BW',
-    handle: '@bobw',
-    time: '5h ago',
-    content: 'Looking for a frontend developer to join my hackathon team. We are building a mobile app to help students find study groups on campus. Tech stack: React Native & Firebase. #hackathon #reactnative',
-    likes: 5,
-    comments: [],
-    views: 210,
-    isProject: true,
-  },
-   {
-    id: 3,
-    authorId: "user4",
-    author: 'Charlie Brown',
-    avatar: 'https://placehold.co/40x40.png?text=CB',
-    handle: '@charlieb',
-    time: '8h ago',
-    content: 'Excited to share that my research paper on sustainable urban planning has been published! Huge thanks to my collaborators.',
-    likes: 25,
-    comments: [
-       { user: 'Alice', text: 'Congratulations! That\'s amazing news.' },
-    ],
-    views: 430,
-    isProject: false,
-  },
-];
 
-type Post = typeof initialPosts[0];
+interface Post {
+    id: string; // Use user ID as post ID for simplicity
+    authorId: string;
+    author: string;
+    avatar?: string;
+    handle: string;
+    time: string;
+    content: string;
+    image?: string;
+    dataAiHint?: string;
+    likes: number;
+    comments: Comment[];
+    views: number;
+    isProject: boolean;
+}
 type Comment = { user: string; text: string };
 
 const PostCard = ({ post }: { post: Post }) => {
@@ -113,7 +80,7 @@ const PostCard = ({ post }: { post: Post }) => {
         <div className="feed-post-data">
            <div className="feed-post-author">
               <div className="img">
-                  <Image src={post.avatar} width={40} height={40} alt={post.author} />
+                  <Image src={post.avatar || `https://placehold.co/40x40.png?text=${post.author.charAt(0)}`} width={40} height={40} alt={post.author} />
               </div>
               <div className="text">
                 <div className="text_m">{post.author}</div>
@@ -202,8 +169,9 @@ const PostCard = ({ post }: { post: Post }) => {
 
 
 export function CampusFeed() {
-  const [posts, setPosts] = useState(initialPosts);
-  const [newPost, setNewPost] = useState('');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [newPostContent, setNewPostContent] = useState('');
   const { toast } = useToast();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
@@ -222,6 +190,39 @@ export function CampusFeed() {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      try {
+        const users = await getAllUsers();
+        const generatedPosts: Post[] = users.map(user => ({
+          id: user.id,
+          authorId: user.id,
+          author: `${user.firstName} ${user.lastName || ''}`.trim(),
+          avatar: user.profilePhotoURL,
+          handle: `@${user.firstName.toLowerCase()}`,
+          time: 'Recently',
+          content: user.bio || `Hello! I'm ${user.firstName}, a student from ${user.collegeName}. Let's connect and collaborate on exciting projects!`,
+          likes: Math.floor(Math.random() * 50),
+          comments: [],
+          views: Math.floor(Math.random() * 500),
+          isProject: false, // Defaulting to false, can be changed later
+        }));
+        setPosts(generatedPosts);
+      } catch (error) {
+        toast({
+          title: "Failed to load feed",
+          description: "Could not fetch user data for posts.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPosts();
+  }, [toast]);
+
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -250,19 +251,25 @@ export function CampusFeed() {
   }
 
   const handlePost = async () => {
-    if (!newPost.trim() && !filePreview) return;
+    if (!newPostContent.trim() && !filePreview) return;
 
-    const authorName = currentUser ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : 'User';
-    const authorHandle = currentUser ? `@${currentUser.firstName.toLowerCase()}` : '@user';
+    if (!currentUser) {
+        toast({
+            title: "Not Logged In",
+            description: "You must be logged in to create a post.",
+            variant: "destructive"
+        });
+        return;
+    }
 
     const post: Post = {
-        id: Date.now(),
-        authorId: auth.currentUser?.uid || "user1",
-        author: authorName,
-        avatar: currentUser?.profilePhotoURL || 'https://placehold.co/40x40.png',
-        handle: authorHandle,
+        id: currentUser.id + Date.now(),
+        authorId: currentUser.id,
+        author: `${currentUser.firstName} ${currentUser.lastName || ''}`.trim(),
+        avatar: currentUser?.profilePhotoURL,
+        handle: `@${currentUser.firstName.toLowerCase()}`,
         time: 'Just now',
-        content: newPost,
+        content: newPostContent,
         image: filePreview || undefined,
         dataAiHint: '',
         likes: 0,
@@ -272,7 +279,7 @@ export function CampusFeed() {
     };
 
     setPosts([post, ...posts]);
-    setNewPost('');
+    setNewPostContent('');
     removeFile();
 
     toast({
@@ -280,6 +287,14 @@ export function CampusFeed() {
         description: "Your post has been added to the feed for this session.",
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-full mt-16">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-xl mx-auto">
@@ -298,8 +313,8 @@ export function CampusFeed() {
               <Textarea
                 placeholder="What's on your mind? Share an update, idea, or project..."
                 className="bg-transparent border-2 border-input focus:border-primary focus:ring-primary/50"
-                value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
               />
               {filePreview && (
                   <div className="mt-4 relative">

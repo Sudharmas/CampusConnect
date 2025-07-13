@@ -221,6 +221,22 @@ export async function getAllUsersAsProfileString(): Promise<string> {
 }
 
 /**
+ * Fetches all users from the 'users' collection.
+ * @returns A promise that resolves to an array of User objects.
+ */
+export async function getAllUsers(): Promise<User[]> {
+    const usersCollectionRef = collection(db, 'users');
+    const userSnapshot = await getDocs(usersCollectionRef);
+    
+    if (userSnapshot.empty) {
+        return [];
+    }
+
+    return userSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+}
+
+
+/**
  * Adds a connection for a user.
  * Stores connections in a subcollection: /users/{userId}/connections/{connectedUserId}
  * @param userId The ID of the user initiating the connection.
