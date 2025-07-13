@@ -5,6 +5,7 @@ import './premium-button.css';
 import './signup-button.css';
 import './login-button.css';
 import './search-bar.css';
+import './loader.css';
 
 export const metadata: Metadata = {
   title: 'CampusConnect',
