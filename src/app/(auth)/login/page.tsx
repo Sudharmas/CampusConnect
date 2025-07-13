@@ -86,6 +86,8 @@ export default function LoginPage() {
         let errorMessage = "Failed to sign in with Google. Please try again.";
          if (error.code === 'auth/popup-blocked') {
             errorMessage = "Google Sign-In popup was blocked by the browser. Please allow popups for this site.";
+        } else if (error.code === 'auth/account-exists-with-different-credential') {
+            errorMessage = "An account with this email already exists. Please sign in with your original method.";
         } else if (error.message !== "No account found with this Google account. Please sign up first.") {
            toast({
                 title: "Google Sign-In Failed",
