@@ -1,6 +1,8 @@
 
 'use client';
 
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,12 +10,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Shield, Lock, Trash2, ArrowLeft } from 'lucide-react';
 import LoadingLink from '@/components/ui/loading-link';
 
-export default function ChatPage() {
+function ChatComponent() {
+  const searchParams = useSearchParams();
+  const recipientName = searchParams.get('name') || 'John Smith';
+  const recipientInitial = recipientName ? recipientName.split(' ').map(n => n[0]).join('') : 'JS';
+
   const messages = [
     { id: 1, user: 'You', text: 'Hey! I saw your project post on the campus feed. I\'m really interested in the AI-powered mental health chatbot idea.', timestamp: '10:30 AM' },
-    { id: 2, user: 'John Smith', text: 'That\'s great to hear! We\'re actively looking for collaborators. What\'s your background?', timestamp: '10:31 AM' },
+    { id: 2, user: recipientName, text: 'That\'s great to hear! We\'re actively looking for collaborators. What\'s your background?', timestamp: '10:31 AM' },
     { id: 3, user: 'You', text: 'I\'m a final year Computer Science student specializing in NLP and have some experience with React.', timestamp: '10:32 AM' },
-    { id: 4, user: 'John Smith', text: 'Perfect! That\'s exactly the skill set we need. Are you free for a quick call this week to discuss further?', timestamp: '10:33 AM' },
+    { id: 4, user: recipientName, text: 'Perfect! That\'s exactly the skill set we need. Are you free for a quick call this week to discuss further?', timestamp: '10:33 AM' },
   ];
 
   return (
@@ -31,11 +37,11 @@ export default function ChatPage() {
         <CardHeader className="border-b">
             <div className='flex items-center gap-4'>
                  <Avatar>
-                    <AvatarImage src="https://placehold.co/40x40.png?text=JS" alt="John Smith" />
-                    <AvatarFallback>JS</AvatarFallback>
+                    <AvatarImage src={`https://placehold.co/40x40.png?text=${recipientInitial}`} alt={recipientName} />
+                    <AvatarFallback>{recipientInitial}</AvatarFallback>
                 </Avatar>
                 <div>
-                    <CardTitle className="font-headline text-xl text-glow">Chat with John Smith</CardTitle>
+                    <CardTitle className="font-headline text-xl text-glow">Chat with {recipientName}</CardTitle>
                     <CardDescription className="flex items-center gap-1 text-green-400 mt-1">
                         <Lock className="h-3 w-3" /> This chat is end-to-end encrypted.
                     </CardDescription>
@@ -48,8 +54,8 @@ export default function ChatPage() {
             <div key={message.id} className={`flex items-end gap-2 ${message.user === 'You' ? 'justify-end' : ''}`}>
               {message.user !== 'You' && (
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={`https://placehold.co/32x32.png?text=${message.user.charAt(0)}`} alt={message.user} />
-                  <AvatarFallback>{message.user.charAt(0)}</AvatarFallback>
+                  <AvatarImage src={`https://placehold.co/32x32.png?text=${message.user.split(' ').map(n=>n[0]).join('')}`} alt={message.user} />
+                  <AvatarFallback>{message.user.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                 </Avatar>
               )}
               <div className={`rounded-lg p-3 max-w-xs md:max-w-md ${message.user === 'You' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
@@ -81,4 +87,12 @@ export default function ChatPage() {
       </Card>
     </div>
   );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ChatComponent />
+    </Suspense>
+  )
 }

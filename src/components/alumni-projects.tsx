@@ -1,10 +1,13 @@
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Zap } from "lucide-react";
+import LoadingLink from "./ui/loading-link";
 
 const projects = [
   {
+    alumnusId: "alumnus-jane-doe",
     title: "Eco-Friendly Drone Delivery System",
     alumnus: "Jane Doe, '18",
     company: "Innovate Inc.",
@@ -13,6 +16,7 @@ const projects = [
     status: "Actively Recruiting"
   },
   {
+    alumnusId: "alumnus-john-smith",
     title: "AI-Powered Mental Health Chatbot",
     alumnus: "John Smith, '20",
     company: "MindWell AI",
@@ -21,6 +25,7 @@ const projects = [
     status: "Actively Recruiting"
   },
   {
+    alumnusId: "alumnus-emily-white",
     title: "Blockchain for Secure Voting",
     alumnus: "Emily White, '15",
     company: "Veritas Chain",
@@ -29,6 +34,7 @@ const projects = [
     status: "Reviewing Applicants"
   },
    {
+    alumnusId: "alumnus-michael-brown",
     title: "AR History Tour of Campus",
     alumnus: "Michael Brown, '22",
     company: "Campus Ventures",
@@ -62,7 +68,11 @@ export function AlumniProjects() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full button-glow">Express Interest</Button>
+            <Button className="w-full button-glow" asChild>
+                <LoadingLink href={`/chat?userId=${project.alumnusId}&name=${encodeURIComponent(project.alumnus.split(',')[0])}`}>
+                    Express Interest
+                </LoadingLink>
+            </Button>
           </CardFooter>
         </Card>
       ))}
