@@ -28,15 +28,7 @@ export default function PremiumPage() {
   const currentPlan = plans[selectedPlan];
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 w-full">
-        <div className="w-full max-w-md mb-4 self-start">
-             <Button variant="ghost" asChild>
-                <LoadingLink href="/profile">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Profile
-                </LoadingLink>
-            </Button>
-        </div>
+    <div className="flex items-center justify-center p-4 w-full">
       <div className="premium-modal">
         <div className="premium-form">
           <div className="premium-banner" data-ai-hint="abstract geometric"></div>
