@@ -6,7 +6,10 @@
   height: 96px;
   width: 96px;
   animation: rotate_3922 1.2s linear infinite;
-  background-image: linear-gradient(hsl(var(--primary)), hsl(var(--accent)));
+  background-image: conic-gradient(
+    hsl(var(--primary)) 70%,
+    hsl(270, 80%, 60%) 30%
+  );
 }
 
 .loader-container span {
@@ -14,7 +17,10 @@
   border-radius: 50%;
   height: 100%;
   width: 100%;
-  background-image: linear-gradient(hsl(var(--primary)), hsl(var(--accent)));
+  background-image: conic-gradient(
+    hsl(var(--primary)) 70%,
+    hsl(270, 80%, 60%) 30%
+  );
 }
 
 .loader-container span:nth-of-type(1) {
