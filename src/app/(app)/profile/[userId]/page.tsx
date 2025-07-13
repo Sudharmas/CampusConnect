@@ -1,43 +1,16 @@
 
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getUserById, User } from '@/services/user';
-import LoadingSpinner from '@/components/loading-spinner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import LoadingLink from '@/components/ui/loading-link';
 import { ArrowLeft } from 'lucide-react';
+import { ProfileConnectButton } from './profile-connect-button';
 
-export default function UserProfilePage() {
-  const [userData, setUserData] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRequestSent, setIsRequestSent] = useState(false);
-  const params = useParams();
-  const userId = params.userId as string;
-
-  useEffect(() => {
-    async function fetchUser() {
-      setIsLoading(true);
-      if (userId) {
-        const fetchedUser = await getUserById(userId);
-        setUserData(fetchedUser);
-      }
-      setIsLoading(false);
-    }
-    fetchUser();
-  }, [userId]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+export default async function UserProfilePage({ params }: { params: { userId: string } }) {
+  const { userId } = params;
+  const userData = await getUserById(userId);
 
   if (!userData) {
     return (
@@ -109,13 +82,7 @@ export default function UserProfilePage() {
           </div>
           
            <div className="pt-4">
-             <Button 
-                className="w-full button-glow" 
-                onClick={() => setIsRequestSent(true)}
-                disabled={isRequestSent}
-              >
-                {isRequestSent ? 'Request Sent' : 'Send Connection Request'}
-              </Button>
+              <ProfileConnectButton />
            </div>
         </CardContent>
       </Card>
