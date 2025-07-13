@@ -14,18 +14,19 @@ import { ArrowLeft } from 'lucide-react';
 export default function UserProfilePage({ params }: { params: { userId: string } }) {
   const [userData, setUserData] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { userId } = params;
 
   useEffect(() => {
     async function fetchUser() {
       setIsLoading(true);
-      const fetchedUser = await getUserById(params.userId);
+      const fetchedUser = await getUserById(userId);
       setUserData(fetchedUser);
       setIsLoading(false);
     }
-    if (params.userId) {
+    if (userId) {
       fetchUser();
     }
-  }, [params.userId]);
+  }, [userId]);
 
   if (isLoading) {
     return (
