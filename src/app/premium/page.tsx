@@ -28,8 +28,8 @@ export default function PremiumPage() {
   const currentPlan = plans[selectedPlan];
 
   return (
-    <div className="flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-md mb-4">
+    <div className="flex flex-col items-center justify-center p-4 w-full">
+        <div className="w-full max-w-md mb-4 self-start">
              <Button variant="ghost" asChild>
                 <LoadingLink href="/profile">
                     <ArrowLeft className="mr-2 h-4 w-4" />
