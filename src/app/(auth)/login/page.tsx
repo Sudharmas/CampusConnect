@@ -3,13 +3,12 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { signInWithEmailAndPassword, signInWithPopup, UserCredential, getRedirectResult, signInWithRedirect } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '@/lib/firebase';
 import { getUserByUsn, getUserByEmail } from '@/services/user';
 import { useToast } from '@/hooks/use-toast';
 import LoadingLink from '@/components/ui/loading-link';
 import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
 import LoadingSpinner from '@/components/loading-spinner';
 
 
@@ -19,62 +18,17 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(true); // Start as true to handle initial auth check
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam === 'account-exists') {
       setError('An account with this email already exists. Please login.');
+      // A small trick to remove the error from the URL without a full page reload.
+      window.history.replaceState(null, '', '/login');
     }
   }, [searchParams]);
-
-  // Handle redirect result from social sign-in on mobile
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-        try {
-            const userCredential = await getRedirectResult(auth);
-            
-            if (userCredential) {
-                const user = userCredential.user;
-                if (!user.email) {
-                  throw new Error("Could not retrieve email from social account.");
-                }
-
-                const campusUser = await getUserByEmail(user.email);
-                if (!campusUser) {
-                   await auth.signOut();
-                   setError(`No account found with this social account. Please sign up first.`);
-                   setIsLoading(false);
-                   return;
-                }
-                
-                toast({
-                  title: "Welcome Back!",
-                  description: "You've been successfully logged in.",
-                });
-                router.push('/dashboard');
-            } else {
-                setIsLoading(false);
-            }
-        } catch(error: any) {
-            console.error("Social Sign-In Error:", error);
-            if (error.code === 'auth/account-exists-with-different-credential') {
-                setError("An account with this email already exists. Please sign in with your original method.");
-            } else {
-               toast({
-                    title: "Sign-In Failed",
-                    description: "Failed to sign in. Please try again.",
-                    variant: "destructive",
-                });
-            }
-            setIsLoading(false);
-        }
-    }
-    handleRedirectResult();
-  }, [router, toast]);
-
 
   const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -112,11 +66,6 @@ export default function LoginPage() {
   const handleSocialSignIn = async (provider: typeof googleProvider | typeof githubProvider) => {
     setIsLoading(true);
     setError(null);
-
-    if (isMobile) {
-        await signInWithRedirect(auth, provider);
-        return;
-    }
 
     try {
         const userCredential: UserCredential = await signInWithPopup(auth, provider);
@@ -157,9 +106,6 @@ export default function LoginPage() {
     }
   };
 
-  if (isLoading) {
-    return <div className="flex h-screen w-full items-center justify-center"><LoadingSpinner/></div>
-  }
 
   return (
     <div className="login-container-new">
