@@ -12,13 +12,15 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, UserCredential, getRedirectResult, signInWithRedirect } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
 import { getCollegeById, College } from '@/services/college';
 import { createUser, checkIfUserExists, getUserByEmail } from '@/services/user';
 import LoadingLink from '@/components/ui/loading-link';
+import { useIsMobile } from '@/hooks/use-mobile';
+import LoadingSpinner from '@/components/loading-spinner';
 
 const signupFormSchema = z.object({
   role: z.enum(["user", "admin"], {
@@ -41,6 +43,7 @@ export default function SignupPage() {
   const [college, setCollege] = useState<College | null>(null);
   const [isFetchingCollege, setIsFetchingCollege] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const isMobile = useIsMobile();
 
 
   const form = useForm<SignupFormValues>({
@@ -188,66 +191,112 @@ export default function SignupPage() {
     }
   };
 
-  const handleSocialSignIn = (provider: typeof googleProvider | typeof githubProvider) => {
-    setIsSigningIn(true);
-    signInWithPopup(auth, provider)
-      .then(async (userCredential: UserCredential) => {
-        const user = userCredential.user;
-        const email = user.email;
+  const processSocialSignIn = async (userCredential: UserCredential) => {
+    const user = userCredential.user;
+    const email = user.email;
 
-        if (!email) {
-          toast({
-            title: "Sign-In Failed",
-            description: "Could not retrieve an email from your social account. Please try a different method or ensure your email is public on your profile.",
-            variant: "destructive"
-          });
-          if (auth.currentUser) await auth.signOut();
-          return;
+    if (!email) {
+      toast({
+        title: "Sign-In Failed",
+        description: "Could not retrieve an email from your social account. Please try a different method or ensure your email is public on your profile.",
+        variant: "destructive"
+      });
+      if (auth.currentUser) await auth.signOut();
+      setIsSigningIn(false);
+      return;
+    }
+    
+    const campusUser = await getUserByEmail(email);
+    if (campusUser) {
+      toast({
+        title: "Welcome Back!",
+        description: "You've been successfully logged in.",
+      });
+      router.push('/dashboard');
+    } else {
+      const [firstName, ...lastNameParts] = (user.displayName || "").split(" ");
+      form.reset({
+        ...form.getValues(),
+        firstName: firstName || "",
+        lastName: lastNameParts.join(" ") || "",
+        email: email,
+        password: ""
+      });
+      toast({
+        title: "Welcome!",
+        description: "Please complete your profile details to finish signing up.",
+      });
+    }
+    setIsSigningIn(false);
+  }
+
+  // Handle redirect result from social sign-in on mobile
+  useEffect(() => {
+    const handleRedirectResult = async () => {
+        try {
+            setIsSigningIn(true);
+            const userCredential = await getRedirectResult(auth);
+            if (userCredential) {
+                await processSocialSignIn(userCredential);
+            } else {
+                setIsSigningIn(false);
+            }
+        } catch(error: any) {
+            console.error("Social Sign-In Error:", error);
+            if (error.code === 'auth/account-exists-with-different-credential') {
+                router.push('/login?error=account-exists');
+                return;
+            }
+            toast({
+                title: "Sign-In Failed",
+                description: "Failed to sign in. Please try again.",
+                variant: "destructive",
+            });
+            setIsSigningIn(false);
         }
-        
-        const campusUser = await getUserByEmail(email);
-        if (campusUser) {
-          toast({
-            title: "Welcome Back!",
-            description: "You've been successfully logged in.",
-          });
-          router.push('/dashboard');
-        } else {
-          const [firstName, ...lastNameParts] = (user.displayName || "").split(" ");
-          form.reset({
-            ...form.getValues(),
-            firstName: firstName || "",
-            lastName: lastNameParts.join(" ") || "",
-            email: email,
-            password: ""
-          });
-          toast({
-            title: "Welcome!",
-            description: "Please complete your profile details to finish signing up.",
-          });
-        }
-      })
-      .catch((error: any) => {
+    }
+    handleRedirectResult();
+  }, [router, toast]);
+
+
+  const handleSocialSignIn = async (provider: typeof googleProvider | typeof githubProvider) => {
+    setIsSigningIn(true);
+
+    if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return; // Redirect will happen
+    }
+
+    try {
+        const userCredential = await signInWithPopup(auth, provider);
+        await processSocialSignIn(userCredential);
+    } catch (error: any) {
         if (error.code === 'auth/account-exists-with-different-credential') {
             router.push('/login?error=account-exists');
             return;
+        } else if (error.code === 'auth/popup-blocked') {
+            toast({
+                title: "Sign-In Failed",
+                description: "Sign-In popup was blocked by the browser. Please allow popups for this site.",
+                variant: "destructive",
+            });
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            // User closed the popup, do nothing.
+        } else {
+            console.error("Social Sign-In Error:", error);
+            toast({
+                title: "Sign-In Failed",
+                description: `Failed to sign in with ${provider.providerId}. Please try again.`,
+                variant: "destructive",
+            });
         }
-        
-        console.error("Social Sign-In Error:", error);
-        let errorMessage = `Failed to sign in with ${provider.providerId}. Please try again.`;
-        if (error.code === 'auth/popup-blocked') {
-            errorMessage = "Sign-In popup was blocked by the browser. Please allow popups for this site.";
-        }
-        toast({
-            title: "Sign-In Failed",
-            description: errorMessage,
-            variant: "destructive",
-        });
-      })
-      .finally(() => {
         setIsSigningIn(false);
-      });
+    }
   };
+
+  if (isSigningIn) {
+    return <div className="flex h-screen w-full items-center justify-center"><LoadingSpinner/></div>
+  }
 
   return (
     <div className="signup-container">
