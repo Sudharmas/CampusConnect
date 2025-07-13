@@ -30,7 +30,7 @@ export function LandingPage() {
   };
   
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex flex-col min-h-screen text-foreground">
       <AnimatedBackground />
       <header className="px-4 lg:px-6 h-14 flex items-center z-10">
         <Link href="#" className="flex items-center justify-center" prefetch={false}>
