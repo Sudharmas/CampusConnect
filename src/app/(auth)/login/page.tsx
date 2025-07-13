@@ -56,7 +56,7 @@ export default function LoginPage() {
       } catch (error: any) {
         console.error("Redirect Sign-In Error:", error);
         if (error.code === 'auth/account-exists-with-different-credential') {
-            setError("An account with this email already exists. Please sign in with your original method.");
+             router.push('/login?error=account-exists');
         } else {
             toast({
                 title: "Sign-In Failed",
@@ -129,8 +129,11 @@ export default function LoginPage() {
         const campusUser = await getUserByEmail(user.email);
         if (!campusUser) {
            await auth.signOut();
-           setError(`No account found with this ${provider.providerId.split('.')[0]} account. Please sign up first.`);
-           setIsLoading(false);
+           const params = new URLSearchParams();
+           params.set('error', 'no-account');
+           params.set('email', user.email);
+           if (user.displayName) params.set('name', user.displayName);
+           router.push(`/signup?${params.toString()}`);
            return;
         }
         toast({
