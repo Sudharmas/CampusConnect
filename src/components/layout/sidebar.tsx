@@ -96,7 +96,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
         <SidebarHeader className="p-4">
-            <LoadingLink href="/" className="flex items-center gap-2">
+            <LoadingLink href="/dashboard" className="flex items-center gap-2">
                  <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
