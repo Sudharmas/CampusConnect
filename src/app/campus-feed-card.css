@@ -13,7 +13,6 @@
   animation: FeedCardAnimation 8s ease infinite;
   transition: .4s ease-in-out;
   border-radius: 0.5rem;
-  cursor: pointer;
   padding: 1rem;
   display: flex;
   flex-direction: column;
@@ -31,12 +30,12 @@
   opacity: 1;
 }
 
-.fl:hover .fullscreen {
+.fl button:hover {
   transform: scale(1.2);
 }
 
-.fl:hover .fullscreen_svg {
-  fill: white;
+.fl button:hover .fullscreen_svg {
+  fill: hsl(var(--foreground));
 }
 
 .fullscreen {
@@ -44,13 +43,13 @@
   height: 1.5em;
   border-radius: 5px;
   background-color: hsla(var(--card), 0.7);
-  margin-top: -0.5rem;
-  margin-right: -0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: .2s ease-in-out;
   box-shadow: 2px 2px 6px rgba(0,0,0,.4);
+  margin-top: -0.5rem;
+  margin-right: -0.5rem;
 }
 
 .fullscreen_svg {
@@ -139,7 +138,6 @@
   gap: 0.75em;
   transition: .2s ease-in-out;
   margin-top: 1.5rem;
-  justify-content: flex-end;
 }
 
 .feed-post-stat {
@@ -152,19 +150,19 @@
   background-color: hsla(var(--muted) / 0.5);
   transition: .2s ease-in-out, margin .2s ease-in-out;
   margin-top: -0.5em;
+  color: hsl(var(--foreground));
 }
 
 .feed-post-stat-text {
   font-family: 'Montserrat', sans-serif;
   font-size: 0.8em;
   margin-left: 0.25em;
-  color: white;
 }
 
 .feed-post-stat-svg {
   width: 14px;
   height: 14px;
-  fill: white;
+  fill: currentColor;
 }
 
 .feed-post-stat:hover {
@@ -178,7 +176,6 @@
 }
 .feed-post-main:hover .feed-post-stat.likes { transition-delay: 0.05s; }
 .feed-post-main:hover .feed-post-stat.comments { transition-delay: 0.1s; }
-.feed-post-main:hover .feed-post-stat.views { transition-delay: 0.15s; }
 
 
 .feed-post-card_content {
