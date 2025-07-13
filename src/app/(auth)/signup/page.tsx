@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { auth, googleProvider, githubProvider } from '@/lib/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
 import { getCollegeById, College } from '@/services/college';
@@ -40,7 +40,8 @@ export default function SignupPage() {
   const { toast } = useToast();
   const [college, setCollege] = useState<College | null>(null);
   const [isFetchingCollege, setIsFetchingCollege] = useState(false);
-  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
 
   const form = useForm<SignupFormValues>({
     resolver: async (data, context, options) => {
@@ -134,7 +135,7 @@ export default function SignupPage() {
 
       const currentUser = auth.currentUser;
       if (currentUser && currentUser.email === values.email) {
-          // This is a Google Sign-In user completing their profile
+          // This is a social sign-in user completing their profile
           await createUser({
             id: currentUser.uid,
             role: values.role,
@@ -187,15 +188,24 @@ export default function SignupPage() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    setIsGoogleSigningIn(true);
-    signInWithPopup(auth, googleProvider)
+  const handleSocialSignIn = (provider: typeof googleProvider | typeof githubProvider) => {
+    setIsSigningIn(true);
+    signInWithPopup(auth, provider)
       .then(async (userCredential: UserCredential) => {
         const user = userCredential.user;
-        if (!user.email) {
-          throw new Error("Could not retrieve email from Google account.");
+        const email = user.email;
+
+        if (!email) {
+          toast({
+            title: "Sign-In Failed",
+            description: "Could not retrieve an email from your social account. Please try a different method or ensure your email is public on your profile.",
+            variant: "destructive"
+          });
+          if (auth.currentUser) await auth.signOut();
+          return;
         }
-        const campusUser = await getUserByEmail(user.email);
+        
+        const campusUser = await getUserByEmail(email);
         if (campusUser) {
           toast({
             title: "Welcome Back!",
@@ -206,9 +216,9 @@ export default function SignupPage() {
           const [firstName, ...lastNameParts] = (user.displayName || "").split(" ");
           form.reset({
             ...form.getValues(),
-            firstName: firstName,
-            lastName: lastNameParts.join(" "),
-            email: user.email,
+            firstName: firstName || "",
+            lastName: lastNameParts.join(" ") || "",
+            email: email,
             password: ""
           });
           toast({
@@ -218,21 +228,21 @@ export default function SignupPage() {
         }
       })
       .catch((error: any) => {
-        console.error("Google Sign-In Error:", error);
-        let errorMessage = "Failed to sign in with Google. Please try again.";
+        console.error("Social Sign-In Error:", error);
+        let errorMessage = `Failed to sign in with ${provider.providerId}. Please try again.`;
         if (error.code === 'auth/account-exists-with-different-credential') {
             errorMessage = "An account with this email already exists using a different sign-in method.";
         } else if (error.code === 'auth/popup-blocked') {
-            errorMessage = "Google Sign-In popup was blocked by the browser. Please allow popups for this site.";
+            errorMessage = "Sign-In popup was blocked by the browser. Please allow popups for this site.";
         }
         toast({
-            title: "Google Sign-In Failed",
+            title: "Sign-In Failed",
             description: errorMessage,
             variant: "destructive",
         });
       })
       .finally(() => {
-        setIsGoogleSigningIn(false);
+        setIsSigningIn(false);
       });
   };
 
@@ -389,7 +399,7 @@ export default function SignupPage() {
                 )}
             />
             
-            <Button type="submit" className="signup-new-button" disabled={isSubmitting || isFetchingCollege || isGoogleSigningIn}>
+            <Button type="submit" className="signup-new-button" disabled={isSubmitting || isFetchingCollege || isSigningIn}>
               {isSubmitting ? "Creating Account..." : "Sign Up"}
             </Button>
             <div className="mt-4 text-center text-sm">
@@ -403,12 +413,12 @@ export default function SignupPage() {
         <div className="social-account-container">
             <span className="title">Or Sign up with</span>
             <div className="social-accounts">
-                <button className="social-button google" onClick={handleGoogleSignIn} disabled={isGoogleSigningIn}>
+                <button className="social-button google" onClick={() => handleSocialSignIn(googleProvider)} disabled={isSigningIn}>
                     <svg className="svg" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 488 512">
                     <path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
                     </svg>
                 </button>
-                <button className="social-button github">
+                <button className="social-button github" onClick={() => handleSocialSignIn(githubProvider)} disabled={isSigningIn}>
                     <svg className="svg" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 496 512">
                         <path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3.3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-27.9-112.3-124.3 0-27.5 10.3-50.5 27.5-68.2-2.3-6.2-11.7-31.9 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 14.3 36 4.9 61.7 2.6 67.9 17.2 17.7 27.5 40.7 27.5 68.2 0 96.7-56.6 118.3-112.6 124.3 9.7 8.5 18.8 25.3 18.8 51.1 0 36.8-.3 66.2-.3 75.2 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"></path>
                     </svg>
