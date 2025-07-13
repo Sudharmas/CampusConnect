@@ -14,23 +14,19 @@ interface LoadingLinkProps extends LinkProps {
 
 const LoadingLink = React.forwardRef<HTMLAnchorElement, LoadingLinkProps>(
   ({ children, onClick, href, ...props }, ref) => {
-    const { showLoader, hideLoader } = useLoading();
+    const { showLoader } = useLoading();
     const pathname = usePathname();
 
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-      const isSamePage = href.toString() === pathname;
+      const hrefStr = href.toString();
+      const isSamePage = hrefStr === pathname;
+      const isHashLink = hrefStr.startsWith('#');
 
-      if (isSamePage) {
-        // If it's the same page, do not show the loader and prevent default navigation.
-        // This stops the infinite spinner issue.
-        if (href.toString().startsWith('#')) {
-            // Allow default behavior for hash links on the same page
-        } else {
-            e.preventDefault();
-        }
-      } else {
-        // Only show loader for navigations to a different page.
+      if (!isSamePage && !isHashLink) {
         showLoader();
+      } else if (isSamePage && !isHashLink) {
+        // Prevent default behavior only if it's the exact same page path, but not a hash link
+        e.preventDefault();
       }
       
       if (onClick) {
