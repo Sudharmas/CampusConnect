@@ -15,6 +15,7 @@ import { ArrowLeft } from 'lucide-react';
 export default function UserProfilePage() {
   const [userData, setUserData] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRequestSent, setIsRequestSent] = useState(false);
   const params = useParams();
   const userId = params.userId as string;
 
@@ -108,7 +109,13 @@ export default function UserProfilePage() {
           </div>
           
            <div className="pt-4">
-             <Button className="w-full button-glow">Send Connection Request</Button>
+             <Button 
+                className="w-full button-glow" 
+                onClick={() => setIsRequestSent(true)}
+                disabled={isRequestSent}
+              >
+                {isRequestSent ? 'Request Sent' : 'Send Connection Request'}
+              </Button>
            </div>
         </CardContent>
       </Card>
