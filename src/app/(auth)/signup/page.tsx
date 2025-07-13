@@ -231,7 +231,7 @@ export default function SignupPage() {
         console.error("Social Sign-In Error:", error);
         let errorMessage = `Failed to sign in with ${provider.providerId}. Please try again.`;
         if (error.code === 'auth/account-exists-with-different-credential') {
-            errorMessage = "An account with this email already exists using a different sign-in method.";
+            errorMessage = "An account with this email already exists. Please sign in using your original method to link your accounts.";
         } else if (error.code === 'auth/popup-blocked') {
             errorMessage = "Sign-In popup was blocked by the browser. Please allow popups for this site.";
         }
