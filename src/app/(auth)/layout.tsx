@@ -8,9 +8,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center p-4 bg-transparent">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center p-4">
       <AnimatedBackground variant="login" />
-      <div className="absolute top-6 left-6">
+      <div className="absolute top-6 left-6 z-10">
         <LoadingLink href="/" className="flex items-center justify-center" prefetch={false}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -33,7 +33,9 @@ export default function AuthLayout({
           <span className="ml-2 text-lg font-bold font-headline text-glow">CampusConnect</span>
         </LoadingLink>
       </div>
-      {children}
+      <div className="flex w-full flex-1 items-center justify-center pt-20 sm:pt-0">
+        {children}
+      </div>
     </div>
   );
 }
