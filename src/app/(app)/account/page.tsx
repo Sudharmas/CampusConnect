@@ -197,10 +197,10 @@ export default function AccountPage() {
             <h3 className="text-lg font-medium font-headline">Email Addresses</h3>
             <div className="space-y-2">
                 <Label htmlFor="primary-email">Primary Email</Label>
-                <div className="flex items-center gap-4">
-                    <Input id="primary-email" type="email" value={campusUser.emailPrimary} disabled />
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <Input id="primary-email" type="email" value={campusUser.emailPrimary} disabled className="flex-grow" />
                      {!primaryEmailVerified && (
-                        <Button onClick={handleSendPrimaryVerificationLink}>Verify</Button>
+                        <Button onClick={handleSendPrimaryVerificationLink} className="w-full sm:w-auto">Verify</Button>
                     )}
                 </div>
                  <Badge variant={primaryEmailVerified ? "default" : "destructive"} className={primaryEmailVerified ? "bg-green-600/80" : ""}>
@@ -210,38 +210,43 @@ export default function AccountPage() {
             <div className="space-y-2">
                 <Label htmlFor="optional-email">Optional Email</Label>
                 {isEditingOptionalEmail ? (
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                         <Input 
                             id="optional-email-input" 
                             type="email" 
                             placeholder="Add a secondary email" 
                             value={optionalEmailInput}
                             onChange={(e) => setOptionalEmailInput(e.target.value)}
+                            className="flex-grow"
                         />
-                        <Button onClick={handleSaveOptionalEmail} disabled={isSaving}>
-                            {isSaving ? "Saving..." : "Save"}
-                        </Button>
-                        { campusUser.emailOptional && (
-                            <Button variant="outline" onClick={() => {
-                                setIsEditingOptionalEmail(false);
-                                setOptionalEmailInput(campusUser.emailOptional || "");
-                            }}>Cancel</Button>
-                        )}
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          <Button onClick={handleSaveOptionalEmail} disabled={isSaving} className="flex-grow sm:flex-grow-0">
+                              {isSaving ? "Saving..." : "Save"}
+                          </Button>
+                          { campusUser.emailOptional && (
+                              <Button variant="outline" onClick={() => {
+                                  setIsEditingOptionalEmail(false);
+                                  setOptionalEmailInput(campusUser.emailOptional || "");
+                              }} className="flex-grow sm:flex-grow-0">Cancel</Button>
+                          )}
+                        </div>
                     </div>
                 ) : (
-                    <div className="flex items-center gap-4">
-                        <Input id="optional-email-display" type="email" value={campusUser.emailOptional || "No optional email added"} disabled />
-                        {campusUser.emailOptional && !campusUser.emailOptionalVerified && (
-                          <Button onClick={handleVerifyOptionalEmail} disabled={isVerifying}>
-                            {isVerifying ? "Verifying..." : "Verify"}
-                          </Button>
-                        )}
-                        {campusUser.emailOptional && (
-                          <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)}>Edit</Button>
-                        )}
-                        {!campusUser.emailOptional && (
-                           <Button onClick={() => setIsEditingOptionalEmail(true)}>Add Email</Button>
-                        )}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                        <Input id="optional-email-display" type="email" value={campusUser.emailOptional || "No optional email added"} disabled className="flex-grow"/>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                          {campusUser.emailOptional && !campusUser.emailOptionalVerified && (
+                            <Button onClick={handleVerifyOptionalEmail} disabled={isVerifying} className="flex-grow sm:flex-grow-0">
+                              {isVerifying ? "Verifying..." : "Verify"}
+                            </Button>
+                          )}
+                          {campusUser.emailOptional && (
+                            <Button variant="outline" onClick={() => setIsEditingOptionalEmail(true)} className="flex-grow sm:flex-grow-0">Edit</Button>
+                          )}
+                          {!campusUser.emailOptional && (
+                             <Button onClick={() => setIsEditingOptionalEmail(true)} className="w-full sm:w-auto">Add Email</Button>
+                          )}
+                        </div>
                     </div>
                 )}
                  {campusUser.emailOptional && (
@@ -257,14 +262,14 @@ export default function AccountPage() {
           <div className="space-y-4">
              <h3 className="text-lg font-medium font-headline text-destructive">Danger Zone</h3>
              <Card className="border-destructive/50 bg-destructive/10">
-                <CardHeader className="flex-row items-center justify-between">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <CardTitle className="text-lg text-destructive">Delete Account</CardTitle>
                         <CardDescription>Permanently delete your account and all of your content.</CardDescription>
                     </div>
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive" disabled={isDeleting}>
+                            <Button variant="destructive" disabled={isDeleting} className="w-full sm:w-auto">
                                 {isDeleting ? "Deleting..." : "Delete Account"}
                             </Button>
                         </AlertDialogTrigger>

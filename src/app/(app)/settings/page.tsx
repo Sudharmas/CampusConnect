@@ -17,14 +17,14 @@ export default function SettingsPage() {
           
           <div className="space-y-4">
             <h3 className="text-lg font-medium font-headline">Notifications</h3>
-            <div className="flex items-center justify-between rounded-lg border p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between rounded-lg border p-4 gap-4">
               <div className="space-y-0.5">
                 <Label htmlFor="email-notifications" className="text-base">Email Notifications</Label>
                 <p className="text-sm text-muted-foreground">
                   Receive emails about new messages, project invites, and collaboration requests.
                 </p>
               </div>
-              <Switch id="email-notifications" defaultChecked />
+              <Switch id="email-notifications" defaultChecked className="self-end sm:self-center" />
             </div>
           </div>
           
@@ -43,7 +43,7 @@ export default function SettingsPage() {
           </div>
           
           <div className="flex justify-end">
-             <Button className="button-glow">Save Changes</Button>
+             <Button className="button-glow w-full sm:w-auto">Save Changes</Button>
           </div>
           
         </CardContent>

@@ -130,7 +130,7 @@ export function ProfileForm({ initialData, isEditing, onSave, onCancel, localAva
   return (
     <Form {...form}>
       <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
-        <div className="flex items-center gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
             <Avatar className="h-24 w-24">
                 <AvatarImage src={finalAvatarSrc} alt="User avatar" />
                 <AvatarFallback>{initialData.firstName?.charAt(0)}{initialData.lastName?.charAt(0)}</AvatarFallback>

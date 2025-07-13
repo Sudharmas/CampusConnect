@@ -35,7 +35,7 @@ export default async function UserProfilePage({ params }: { params: { userId: st
       </div>
       <Card className="mx-auto max-w-4xl bg-card/70 backdrop-blur-sm">
         <CardHeader>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <Avatar className="h-24 w-24 border-2 border-primary">
               <AvatarImage src={userData.profilePhotoURL} alt={`${userData.firstName}'s avatar`} />
               <AvatarFallback className="text-3xl">
