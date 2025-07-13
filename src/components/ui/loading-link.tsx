@@ -4,6 +4,7 @@
 import React from 'react';
 import Link, { LinkProps } from 'next/link';
 import { useLoading } from '@/context/loading-context';
+import { usePathname } from 'next/navigation';
 
 interface LoadingLinkProps extends LinkProps {
   children: React.ReactNode;
@@ -12,18 +13,30 @@ interface LoadingLinkProps extends LinkProps {
 }
 
 const LoadingLink = React.forwardRef<HTMLAnchorElement, LoadingLinkProps>(
-  ({ children, onClick, ...props }, ref) => {
-    const { showLoader } = useLoading();
+  ({ children, onClick, href, ...props }, ref) => {
+    const { showLoader, hideLoader } = useLoading();
+    const pathname = usePathname();
 
     const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-      showLoader();
+      // Check if the link's destination is the same as the current page
+      const isSamePage = href === pathname;
+
+      if (!isSamePage) {
+        showLoader();
+      } else {
+        // For same-page clicks, briefly show and then hide the loader
+        // to acknowledge the click without getting stuck.
+        showLoader();
+        setTimeout(() => hideLoader(), 100); 
+      }
+      
       if (onClick) {
         onClick(e);
       }
     };
 
     return (
-      <Link {...props} onClick={handleClick} ref={ref}>
+      <Link href={href} {...props} onClick={handleClick} ref={ref}>
         {children}
       </Link>
     );
