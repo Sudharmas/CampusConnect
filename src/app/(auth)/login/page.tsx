@@ -19,7 +19,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start as true to handle initial auth check
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
@@ -34,24 +34,32 @@ export default function LoginPage() {
   useEffect(() => {
     const handleRedirectResult = async () => {
         try {
-            setIsLoading(true);
+            // getRedirectResult resolves to null if no redirect operation was pending.
             const userCredential = await getRedirectResult(auth);
+            
             if (userCredential) {
+                // A user signed in via redirect.
                 const user = userCredential.user;
                 if (!user.email) {
                   throw new Error("Could not retrieve email from social account.");
                 }
+
                 const campusUser = await getUserByEmail(user.email);
                 if (!campusUser) {
                    await auth.signOut();
                    setError(`No account found with this social account. Please sign up first.`);
+                   setIsLoading(false); // Stop loading to show the error
                    return;
                 }
+                
                 toast({
                   title: "Welcome Back!",
                   description: "You've been successfully logged in.",
                 });
                 router.push('/dashboard');
+            } else {
+                // No redirect result, so we can stop the loading state.
+                setIsLoading(false);
             }
         } catch(error: any) {
             console.error("Social Sign-In Error:", error);
@@ -64,11 +72,7 @@ export default function LoginPage() {
                     variant: "destructive",
                 });
             }
-        } finally {
-            // Only stop loading if there was no redirect
-            if (auth.currentUser === null) {
-                setIsLoading(false);
-            }
+            setIsLoading(false); // Ensure loading stops on error
         }
     }
     handleRedirectResult();
@@ -114,7 +118,9 @@ export default function LoginPage() {
 
     if (isMobile) {
         await signInWithRedirect(auth, provider);
-        return; // The redirect will happen, no further code in this function will execute
+        // The redirect will happen, so this function's execution will stop here.
+        // The result is handled by the useEffect hook above.
+        return;
     }
 
     try {
@@ -152,8 +158,7 @@ export default function LoginPage() {
                 variant: "destructive",
             });
         }
-    } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Only set loading to false for popup flow errors
     }
   };
 
