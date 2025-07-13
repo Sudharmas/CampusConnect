@@ -1,7 +1,7 @@
 
 'use client';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Code, Users, BrainCircuit } from 'lucide-react';
+import { ArrowRight, Code, Users, BrainCircuit, Menu } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
@@ -9,6 +9,7 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import AnimatedBackground from './ui/animated-background';
 import LoadingLink from './ui/loading-link';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 
 export function LandingPage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export function LandingPage() {
           </svg>
           <span className="ml-2 text-lg font-bold font-headline text-glow">CampusConnect</span>
         </LoadingLink>
-        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
+        <nav className="ml-auto hidden md:flex gap-4 sm:gap-6 items-center">
           <LoadingLink href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Features
           </LoadingLink>
@@ -75,22 +76,56 @@ export function LandingPage() {
             </span>
           </LoadingLink>
         </nav>
+        <div className="ml-auto md:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] bg-background/90 backdrop-blur-sm">
+                    <nav className="grid gap-6 text-lg font-medium mt-12">
+                         <SheetClose asChild>
+                            <LoadingLink href="#features" className="hover:text-primary" prefetch={false}>
+                                Features
+                            </LoadingLink>
+                        </SheetClose>
+                         <SheetClose asChild>
+                            <LoadingLink href="#alumni" className="hover:text-primary" prefetch={false}>
+                                Alumni
+                            </LoadingLink>
+                        </SheetClose>
+                        <SheetClose asChild>
+                             <LoadingLink href="/login" prefetch={false} className="hover:text-primary">
+                                Login
+                             </LoadingLink>
+                        </SheetClose>
+                        <SheetClose asChild>
+                            <LoadingLink href="/signup" prefetch={false} className="hover:text-primary">
+                                Sign Up
+                            </LoadingLink>
+                        </SheetClose>
+                    </nav>
+                </SheetContent>
+            </Sheet>
+        </div>
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 relative">
           <div className="container px-4 md:px-6 text-center relative">
-            <div className="space-y-4">
+            <div className="space-y-6">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl/none font-headline text-glow">
                 Connect. Collaborate. Create.
               </h1>
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                 The ultimate platform for students and alumni to build the future, together. Find partners, launch projects, and make your mark.
               </p>
-              <div className="space-x-4 inline-block">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                 <LoadingLink
                   href="/signup"
                   prefetch={false}
-                  className="signup-button text-lg"
+                  className="signup-button text-lg w-full sm:w-auto"
                 >
                   <span className="signup-button-span">
                     Get Started
