@@ -1,6 +1,5 @@
 
 'use client';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Code, Users, BrainCircuit } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import AnimatedBackground from './ui/animated-background';
+import LoadingLink from './ui/loading-link';
 
 export function LandingPage() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export function LandingPage() {
     <div className="flex flex-col min-h-screen text-foreground">
       <AnimatedBackground />
       <header className="px-4 lg:px-6 h-14 flex items-center z-10">
-        <Link href="#" className="flex items-center justify-center" prefetch={false}>
+        <LoadingLink href="#" className="flex items-center justify-center" prefetch={false}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -53,27 +53,27 @@ export function LandingPage() {
             <path d="M11 13 22 5" />
           </svg>
           <span className="ml-2 text-lg font-bold font-headline text-glow">CampusConnect</span>
-        </Link>
+        </LoadingLink>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+          <LoadingLink href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Features
-          </Link>
-          <Link href="#alumni" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+          </LoadingLink>
+          <LoadingLink href="#alumni" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Alumni
-          </Link>
-          <Link href="/login" prefetch={false}>
+          </LoadingLink>
+          <LoadingLink href="/login" prefetch={false}>
              <div className="login-container-nav">
                 <Button variant="outline" className="login-button-nav border-none shadow-none text-foreground">
                   Login
                 </Button>
               </div>
-          </Link>
-          <Link href="/signup" prefetch={false} className="signup-button">
+          </LoadingLink>
+          <LoadingLink href="/signup" prefetch={false} className="signup-button">
             <span className="signup-button-span">
               Sign Up
               <ArrowRight className="ml-2 h-4 w-4" />
             </span>
-          </Link>
+          </LoadingLink>
         </nav>
       </header>
       <main className="flex-1">
@@ -87,7 +87,7 @@ export function LandingPage() {
                 The ultimate platform for students and alumni to build the future, together. Find partners, launch projects, and make your mark.
               </p>
               <div className="space-x-4 inline-block">
-                <Link
+                <LoadingLink
                   href="/signup"
                   prefetch={false}
                   className="signup-button text-lg"
@@ -95,7 +95,7 @@ export function LandingPage() {
                   <span className="signup-button-span">
                     Get Started
                   </span>
-                </Link>
+                </LoadingLink>
               </div>
             </div>
           </div>
@@ -151,12 +151,12 @@ export function LandingPage() {
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t z-10 bg-background">
         <p className="text-xs text-muted-foreground">&copy; 2024 CampusConnect. All rights reserved.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+          <LoadingLink href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
             Terms of Service
-          </Link>
-          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+          </LoadingLink>
+          <LoadingLink href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
             Privacy
-          </Link>
+          </LoadingLink>
         </nav>
       </footer>
     </div>

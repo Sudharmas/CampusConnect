@@ -6,6 +6,7 @@ import './signup-button.css';
 import './login-button.css';
 import './search-bar.css';
 import './loader.css';
+import { LoadingProvider } from '@/context/loading-context';
 
 export const metadata: Metadata = {
   title: 'CampusConnect',
@@ -25,8 +26,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased bg-background">
-        {children}
-        <Toaster />
+        <LoadingProvider>
+          {children}
+          <Toaster />
+        </LoadingProvider>
       </body>
     </html>
   );

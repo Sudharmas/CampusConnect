@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Shield, Lock, Trash2, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import LoadingLink from '@/components/ui/loading-link';
 
 export default function ChatPage() {
   const messages = [
@@ -20,10 +20,10 @@ export default function ChatPage() {
     <div className="container mx-auto h-full flex flex-col">
       <div className="mb-4">
         <Button variant="ghost" asChild>
-          <Link href="/dashboard">
+          <LoadingLink href="/dashboard">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Feed
-          </Link>
+          </LoadingLink>
         </Button>
       </div>
 

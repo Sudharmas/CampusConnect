@@ -11,7 +11,6 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
-import Link from "next/link";
 import { Home, User, Lightbulb, GraduationCap, Code, Settings, LogOut, UserCog, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
@@ -22,6 +21,7 @@ import { useEffect, useState } from "react";
 import { getUserById, User as CampusUser } from "@/services/user";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { User as FirebaseUser } from "firebase/auth";
+import LoadingLink from "../ui/loading-link";
 
 interface UserProfile {
   fullName: string;
@@ -96,7 +96,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
         <SidebarHeader className="p-4">
-            <Link href="/" className="flex items-center gap-2">
+            <LoadingLink href="/" className="flex items-center gap-2">
                  <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -116,18 +116,18 @@ export function AppSidebar() {
                     <path d="M11 13 22 5" />
                 </svg>
                 <span className="text-xl font-bold font-headline text-glow">CampusConnect</span>
-            </Link>
+            </LoadingLink>
         </SidebarHeader>
         <SidebarContent className="p-4">
             <SidebarMenu>
                 {navItems.map((item) => (
                     <SidebarMenuItem key={item.href}>
-                        <Link href={item.href}>
+                        <LoadingLink href={item.href}>
                             <SidebarMenuButton isActive={pathname.startsWith(item.href)} className="gap-3">
                                 <item.icon className="h-5 w-5 text-primary text-glow" />
                                 <span>{item.label}</span>
                             </SidebarMenuButton>
-                        </Link>
+                        </LoadingLink>
                     </SidebarMenuItem>
                 ))}
             </SidebarMenu>
@@ -151,12 +151,12 @@ export function AppSidebar() {
             </PopoverTrigger>
             <PopoverContent className="w-56 mb-2" side="top" align="start">
               <div className="flex flex-col space-y-1">
-                <Link href="/account">
+                <LoadingLink href="/account">
                   <Button variant="ghost" className="w-full justify-start">
                     <UserCog className="mr-2 h-4 w-4" />
                     Account Management
                   </Button>
-                </Link>
+                </LoadingLink>
                 <Button variant="ghost" className="w-full justify-start text-destructive hover:text-destructive" onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4"/>
                     Logout
@@ -168,5 +168,3 @@ export function AppSidebar() {
     </Sidebar>
   );
 }
-
-    

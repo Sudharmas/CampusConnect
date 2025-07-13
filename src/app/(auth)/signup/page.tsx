@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState, useEffect } from 'react';
 import { getCollegeById, College } from '@/services/college';
 import { createUser, checkIfUserExists } from '@/services/user';
+import LoadingLink from '@/components/ui/loading-link';
 
 const signupFormSchema = z.object({
   role: z.enum(["user", "admin"], {
@@ -124,19 +125,18 @@ export default function SignupPage() {
 
 
   const handleSignup = async (values: SignupFormValues) => {
-    // 1. Check if user with USN already exists
-    const { usnExists } = await checkIfUserExists(values.usn);
-    if (usnExists) {
-      toast({
-        title: "User Already Exists",
-        description: `An account with USN ${values.usn} already exists. Redirecting to login...`,
-        variant: "destructive"
-      });
-      setShouldRedirect(true);
-      return;
-    }
-
     try {
+      // 1. Check if user with USN already exists
+      const { usnExists } = await checkIfUserExists(values.usn);
+      if (usnExists) {
+        toast({
+          title: "User Already Exists",
+          description: `An account with USN ${values.usn} already exists. Please login.`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Re-fetch college details on submit to be absolutely sure.
       const finalCollege = await getCollegeById(values.collegeID);
       if (!finalCollege) {
@@ -163,7 +163,7 @@ export default function SignupPage() {
         branch: values.branch,
       });
 
-      // Automatically log the user in
+      // Sign in the user immediately after creating the account
       await signInWithEmailAndPassword(auth, values.email, values.password);
 
       toast({
@@ -171,6 +171,7 @@ export default function SignupPage() {
           description: "Welcome to CampusConnect! Redirecting you to the dashboard.",
       });
       router.push('/dashboard');
+      
     } catch (error: any) {
         let errorMessage = "An unknown error occurred.";
         if (error.code === 'auth/email-already-in-use') {
@@ -357,9 +358,9 @@ export default function SignupPage() {
         </Form>
         <div className="mt-4 text-center text-sm">
           Already have an account?{' '}
-          <Link href="/login" className="underline text-primary">
+          <LoadingLink href="/login" className="underline text-primary">
             Login
-          </Link>
+          </LoadingLink>
         </div>
       </CardContent>
     </Card>

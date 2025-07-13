@@ -10,7 +10,7 @@ import Image from "next/image";
 import { useToast } from '@/hooks/use-toast';
 import { addConnection, getUserById, User } from '@/services/user';
 import { auth } from '@/lib/firebase';
-import Link from 'next/link';
+import LoadingLink from '@/components/ui/loading-link';
 
 const initialPosts = [
   {
@@ -218,8 +218,8 @@ export function CampusFeed() {
             <CardFooter className="flex justify-around p-2">
                 {post.isProject ? (
                     <>
-                        <Link href="/chat" className='w-full'><Button variant="ghost" className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary">Collaborate</Button></Link>
-                        <Link href="/chat" className='w-full'><Button variant="ghost" className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary">Source this Project</Button></Link>
+                        <LoadingLink href="/chat" className='w-full'><Button variant="ghost" className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary">Collaborate</Button></LoadingLink>
+                        <LoadingLink href="/chat" className='w-full'><Button variant="ghost" className="w-full flex items-center gap-2 text-muted-foreground hover:text-primary">Source this Project</Button></LoadingLink>
                     </>
                 ) : (
                     <>

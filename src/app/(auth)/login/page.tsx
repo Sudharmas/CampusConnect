@@ -1,7 +1,6 @@
 
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,6 +19,7 @@ import { EyeOpenIcon } from '@/components/icons/eye-open';
 import { EyeClosedIcon } from '@/components/icons/eye-closed';
 import { cn } from '@/lib/utils';
 import { getUserByUsn } from '@/services/user';
+import LoadingLink from '@/components/ui/loading-link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -128,9 +128,9 @@ export default function LoginPage() {
         </form>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="underline text-primary">
+          <LoadingLink href="/signup" className="underline text-primary">
             Sign up
-          </Link>
+          </LoadingLink>
         </div>
       </CardContent>
     </Card>

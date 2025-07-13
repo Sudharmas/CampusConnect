@@ -34,7 +34,7 @@ export default function AppLayout({
 
   if (isAuthenticated === null) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <AnimatedBackground variant="app" />
         <LoadingSpinner />
       </div>

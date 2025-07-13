@@ -1,6 +1,6 @@
 
-import Link from "next/link";
 import AnimatedBackground from "@/components/ui/animated-background";
+import LoadingLink from "@/components/ui/loading-link";
 
 export default function AuthLayout({
   children,
@@ -11,7 +11,7 @@ export default function AuthLayout({
     <div className="flex flex-col min-h-screen items-center justify-center p-4 bg-transparent">
       <AnimatedBackground variant="login" />
       <div className="absolute top-6 left-6">
-        <Link href="/" className="flex items-center justify-center" prefetch={false}>
+        <LoadingLink href="/" className="flex items-center justify-center" prefetch={false}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -31,7 +31,7 @@ export default function AuthLayout({
             <path d="M11 13 22 5" />
           </svg>
           <span className="ml-2 text-lg font-bold font-headline text-glow">CampusConnect</span>
-        </Link>
+        </LoadingLink>
       </div>
       {children}
     </div>

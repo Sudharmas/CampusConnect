@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { ProfileForm } from '@/components/profile-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { getUserById, User } from '@/services/user';
 import { auth } from '@/lib/firebase';
 import LoadingSpinner from '@/components/loading-spinner';
 import { Pencil } from 'lucide-react';
+import LoadingLink from '@/components/ui/loading-link';
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -79,7 +79,7 @@ export default function ProfilePage() {
             <div className="flex flex-col items-center justify-center text-center p-8 space-y-4">
               <p className="text-muted-foreground">You must be logged in to view and edit your profile.</p>
               <Button asChild className="button-glow">
-                <Link href="/login">Login Now</Link>
+                <LoadingLink href="/login">Login Now</LoadingLink>
               </Button>
             </div>
           )}
