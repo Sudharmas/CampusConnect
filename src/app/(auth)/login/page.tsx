@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, UserCredential } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { getUserByUsn, getUserByEmail } from '@/services/user';
@@ -13,11 +13,19 @@ import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'account-exists') {
+      setError('An account with this email already exists. Please login.');
+    }
+  }, [searchParams]);
 
   const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
