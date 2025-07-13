@@ -228,12 +228,14 @@ export default function SignupPage() {
         }
       })
       .catch((error: any) => {
-        console.error("Social Sign-In Error:", error);
-        let errorMessage = `Failed to sign in with ${provider.providerId}. Please try again.`;
         if (error.code === 'auth/account-exists-with-different-credential') {
             router.push('/login?error=account-exists');
             return;
-        } else if (error.code === 'auth/popup-blocked') {
+        }
+        
+        console.error("Social Sign-In Error:", error);
+        let errorMessage = `Failed to sign in with ${provider.providerId}. Please try again.`;
+        if (error.code === 'auth/popup-blocked') {
             errorMessage = "Sign-In popup was blocked by the browser. Please allow popups for this site.";
         }
         toast({
