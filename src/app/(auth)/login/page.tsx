@@ -34,11 +34,9 @@ export default function LoginPage() {
   useEffect(() => {
     const handleRedirectResult = async () => {
         try {
-            // getRedirectResult resolves to null if no redirect operation was pending.
             const userCredential = await getRedirectResult(auth);
             
             if (userCredential) {
-                // A user signed in via redirect.
                 const user = userCredential.user;
                 if (!user.email) {
                   throw new Error("Could not retrieve email from social account.");
@@ -48,7 +46,7 @@ export default function LoginPage() {
                 if (!campusUser) {
                    await auth.signOut();
                    setError(`No account found with this social account. Please sign up first.`);
-                   setIsLoading(false); // Stop loading to show the error
+                   setIsLoading(false);
                    return;
                 }
                 
@@ -58,7 +56,6 @@ export default function LoginPage() {
                 });
                 router.push('/dashboard');
             } else {
-                // No redirect result, so we can stop the loading state.
                 setIsLoading(false);
             }
         } catch(error: any) {
@@ -72,7 +69,7 @@ export default function LoginPage() {
                     variant: "destructive",
                 });
             }
-            setIsLoading(false); // Ensure loading stops on error
+            setIsLoading(false);
         }
     }
     handleRedirectResult();
@@ -118,8 +115,6 @@ export default function LoginPage() {
 
     if (isMobile) {
         await signInWithRedirect(auth, provider);
-        // The redirect will happen, so this function's execution will stop here.
-        // The result is handled by the useEffect hook above.
         return;
     }
 
@@ -158,7 +153,7 @@ export default function LoginPage() {
                 variant: "destructive",
             });
         }
-        setIsLoading(false); // Only set loading to false for popup flow errors
+        setIsLoading(false);
     }
   };
 
