@@ -25,6 +25,7 @@ import { auth } from "@/lib/firebase";
 import { PremiumButton } from "./ui/premium-button";
 import { Separator } from "./ui/separator";
 import { debounce } from 'lodash';
+import LoadingLink from "./ui/loading-link";
 
 
 const profileFormSchema = z.object({
@@ -226,7 +227,9 @@ export function ProfileForm({ initialData, isEditing, onSave, onCancel, localAva
             <div className="flex flex-col items-center justify-center space-y-2">
                <h3 className="text-xl font-headline text-glow">Unlock Your Potential</h3>
                <p className="text-muted-foreground text-center">Go Premium to get exclusive access to top projects and direct mentorship.</p>
-               <PremiumButton>Upgrade to Premium</PremiumButton>
+                <LoadingLink href="/premium">
+                    <PremiumButton>Upgrade to Premium</PremiumButton>
+                </LoadingLink>
             </div>
           </>
         )}
