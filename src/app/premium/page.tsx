@@ -31,7 +31,6 @@ export default function PremiumPage() {
     <div className="flex items-center justify-center p-4 w-full">
       <div className="premium-modal">
         <div className="premium-form">
-          <div className="premium-banner" data-ai-hint="abstract geometric"></div>
           <label className="premium-title">Unlock Your Potential</label>
           <p className="premium-description">
             Go Premium to get exclusive access to top projects, direct mentorship opportunities, and enhanced visibility.
