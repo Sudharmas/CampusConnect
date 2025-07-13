@@ -11,10 +11,9 @@ import { Button } from '@/components/ui/button';
 import LoadingLink from '@/components/ui/loading-link';
 import { ArrowLeft } from 'lucide-react';
 
-export default function UserProfilePage({ params }: { params: { userId: string } }) {
+export default function UserProfilePage({ params: { userId } }: { params: { userId: string } }) {
   const [userData, setUserData] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { userId } = params;
 
   useEffect(() => {
     async function fetchUser() {
