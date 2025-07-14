@@ -15,13 +15,8 @@ function ChatComponent() {
   const recipientName = searchParams.get('name') || 'Select a User';
   const recipientInitial = recipientName ? recipientName.split(' ').map(n => n[0]).join('') : 'U';
 
-  // Mock messages for demonstration
-  const messages = [
-    { id: 1, user: 'You', text: 'Hey! I saw your project post on the campus feed. I\'m really interested in the AI-powered mental health chatbot idea.', timestamp: '10:30 AM' },
-    { id: 2, user: recipientName, text: 'That\'s great to hear! We\'re actively looking for collaborators. What\'s your background?', timestamp: '10:31 AM' },
-    { id: 3, user: 'You', text: 'I\'m a final year Computer Science student specializing in NLP and have some experience with React.', timestamp: '10:32 AM' },
-    { id: 4, user: recipientName, text: 'Perfect! That\'s exactly the skill set we need. Are you free for a quick call this week to discuss further?', timestamp: '10:33 AM' },
-  ];
+  // Mock messages for demonstration - This is where the chat logic would go.
+  const messages: any[] = [];
 
   return (
     <div className="container mx-auto h-full flex flex-col">
@@ -51,7 +46,11 @@ function ChatComponent() {
         </CardHeader>
 
         <CardContent className="flex-grow p-4 overflow-y-auto space-y-4">
-          {messages.map((message) => (
+          {messages.length === 0 ? (
+            <div className="flex justify-center items-center h-full">
+              <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+            </div>
+          ) : messages.map((message) => (
             <div key={message.id} className={`flex items-end gap-2 ${message.user === 'You' ? 'justify-end' : ''}`}>
               {message.user !== 'You' && (
                 <Avatar className="h-8 w-8">
