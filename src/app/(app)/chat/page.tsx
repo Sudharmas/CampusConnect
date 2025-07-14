@@ -7,14 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Shield, Lock, Trash2, ArrowLeft } from 'lucide-react';
+import { Send, Lock, Trash2, ArrowLeft } from 'lucide-react';
 import LoadingLink from '@/components/ui/loading-link';
 
 function ChatComponent() {
   const searchParams = useSearchParams();
-  const recipientName = searchParams.get('name') || 'John Smith';
-  const recipientInitial = recipientName ? recipientName.split(' ').map(n => n[0]).join('') : 'JS';
+  const recipientName = searchParams.get('name') || 'Select a User';
+  const recipientInitial = recipientName ? recipientName.split(' ').map(n => n[0]).join('') : 'U';
 
+  // Mock messages for demonstration
   const messages = [
     { id: 1, user: 'You', text: 'Hey! I saw your project post on the campus feed. I\'m really interested in the AI-powered mental health chatbot idea.', timestamp: '10:30 AM' },
     { id: 2, user: recipientName, text: 'That\'s great to hear! We\'re actively looking for collaborators. What\'s your background?', timestamp: '10:31 AM' },

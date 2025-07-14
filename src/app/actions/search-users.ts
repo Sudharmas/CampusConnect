@@ -24,45 +24,46 @@ export async function searchUsers(searchQuery: string): Promise<SearchedUser[]> 
   const usersCollection = collection(db, 'users');
   const q = searchQuery.toLowerCase();
 
-  // This is a basic implementation. For production apps, a dedicated search
-  // service like Algolia or Elasticsearch is recommended for better performance.
-  const firstNameQuery = query(usersCollection, where('firstName', '>=', q), where('firstName', '<=', q + '\uf8ff'));
-  const lastNameQuery = query(usersCollection, where('lastName', '>=', q), where('lastName', '<=', q + '\uf8ff'));
-  const skillsQuery = query(usersCollection, where('skills', 'array-contains', q));
-  const interestsQuery = query(usersCollection, where('interests', 'array-contains', q));
-
+  // For a production app, a dedicated search service like Algolia or Elasticsearch 
+  // is recommended for better performance and more complex queries. 
+  // Firestore is not optimized for full-text search on its own.
+  
+  // This client-side filtering approach is a workaround for Firestore's limitations.
   try {
-    const [firstNameSnapshot, lastNameSnapshot, skillsSnapshot, interestsSnapshot] = await Promise.all([
-      getDocs(firstNameQuery),
-      getDocs(lastNameQuery),
-      getDocs(skillsQuery),
-      getDocs(interestsQuery),
-    ]);
+    const allUsersSnapshot = await getDocs(usersCollection);
     
-    const usersMap = new Map<string, SearchedUser>();
+    const allUsers = allUsersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data() as User
+    }));
 
-    const processSnapshot = (snapshot: any) => {
-        snapshot.forEach((doc: any) => {
-            if (!usersMap.has(doc.id)) {
-                const data = doc.data() as User;
-                usersMap.set(doc.id, {
-                    id: doc.id,
-                    firstName: data.firstName,
-                    lastName: data.lastName,
-                    profilePhotoURL: data.profilePhotoURL,
-                    skills: data.skills,
-                    interests: data.interests,
-                });
-            }
-        });
-    }
+    const filteredUsers = allUsers.filter(user => {
+        const fullName = `${user.firstName.toLowerCase()} ${user.lastName?.toLowerCase() || ''}`;
+        
+        if (fullName.includes(q)) {
+            return true;
+        }
 
-    processSnapshot(firstNameSnapshot);
-    processSnapshot(lastNameSnapshot);
-    processSnapshot(skillsSnapshot);
-    processSnapshot(interestsSnapshot);
+        if (user.skills?.some(skill => skill.toLowerCase().includes(q))) {
+            return true;
+        }
+        
+        if (user.interests?.some(interest => interest.toLowerCase().includes(q))) {
+            return true;
+        }
+        
+        return false;
+    });
 
-    return Array.from(usersMap.values());
+    // Map to the final SearchedUser structure
+    return filteredUsers.map(user => ({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profilePhotoURL: user.profilePhotoURL,
+      skills: user.skills,
+      interests: user.interests,
+    }));
 
   } catch (error) {
     console.error('Error searching users:', error);

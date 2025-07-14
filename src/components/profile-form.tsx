@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,12 +65,20 @@ export function ProfileForm({ initialData, isEditing, onSave, onCancel, localAva
   });
 
   const debouncedUpdate = useCallback(
-    debounce(async (data: UserUpdatePayload) => {
+    debounce(async (data: ProfileFormValues) => {
       const currentUser = auth.currentUser;
       if (!currentUser || !isEditing) return;
+        
+      const payload: UserUpdatePayload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        bio: data.bio,
+        interests: data.interests?.split(',').map(s => s.trim()).filter(Boolean),
+        skills: data.skills?.split(',').map(s => s.trim()).filter(Boolean),
+      };
 
       try {
-        await updateUser(currentUser.uid, data);
+        await updateUser(currentUser.uid, payload);
         toast({
           title: "Profile Saved",
           description: "Your changes have been automatically saved.",
@@ -81,17 +90,14 @@ export function ProfileForm({ initialData, isEditing, onSave, onCancel, localAva
           variant: "destructive",
         });
       }
-    }, 1000), // Wait 1 second after user stops typing
+    }, 1500), // Wait 1.5 seconds after user stops typing
     [isEditing, toast]
   );
   
   useEffect(() => {
-    const subscription = form.watch((value, { name, type }) => {
-      if (type === 'change' && name && isEditing) {
-          const changedValue = value[name as keyof typeof value];
-          const updateData = { [name]: changedValue };
-
-          debouncedUpdate(updateData);
+    const subscription = form.watch((value) => {
+      if (isEditing) {
+          debouncedUpdate(value as ProfileFormValues);
       }
     });
     return () => subscription.unsubscribe();

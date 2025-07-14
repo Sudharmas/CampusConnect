@@ -65,6 +65,10 @@ const PostCard = ({ post }: { post: Post }) => {
             <DialogContent className="max-w-3xl bg-card/80 backdrop-blur-lg">
               <DialogHeader>
                 <DialogTitle>Post by {post.author}</DialogTitle>
+                <DialogDescription>
+                    <LoadingLink href={`/profile/${post.authorId}`} className="text-sm text-primary hover:underline">{post.handle}</LoadingLink>
+                    <span className="text-sm text-muted-foreground"> &middot; {post.time}</span>
+                </DialogDescription>
               </DialogHeader>
               <div className="mt-4 max-h-[70vh] overflow-y-auto">
                  <p className="whitespace-pre-wrap">{post.content}</p>
@@ -97,7 +101,7 @@ const PostCard = ({ post }: { post: Post }) => {
             
             <div className="feed-post-card_content">
                 {post.isProject ? (
-                    <LoadingLink href="/chat" className='w-full'>
+                    <LoadingLink href={`/chat?userId=${post.authorId}&name=${encodeURIComponent(post.author)}`} className='w-full'>
                         <button className="feed-post-action-button">Collaborate!</button>
                     </LoadingLink>
                 ) : (
@@ -252,26 +256,26 @@ export function CampusFeed() {
 
   const handlePost = async () => {
     if (!newPostContent.trim() && !filePreview) return;
+    if (!currentUser) return;
 
-    const authorName = currentUser ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : 'User';
-    const authorHandle = currentUser ? `@${currentUser.firstName.toLowerCase()}` : '@user';
 
     // This is a local-only post for testing. It will not be saved to a database.
-    const post = {
-        id: Date.now(), // Use timestamp for unique key in local state
-        authorId: auth.currentUser?.uid || "user1",
-        author: authorName,
-        avatar: 'https://placehold.co/40x40.png',
-        handle: authorHandle,
+    const newPost: Post = {
+        id: new Date().toISOString(), // Use timestamp for unique key in local state
+        authorId: currentUser.id,
+        author: `${currentUser.firstName} ${currentUser.lastName || ''}`.trim(),
+        avatar: currentUser.profilePhotoURL,
+        handle: `@${currentUser.firstName.toLowerCase()}`,
         time: 'Just now',
-        content: newPost,
+        content: newPostContent,
         image: filePreview, // Use the local blob URL
         likes: 0,
-        comments: 0,
+        comments: [],
+        views: 0,
         isProject: false,
     };
 
-    setPosts([post, ...posts]);
+    setPosts([newPost, ...posts]);
     setNewPostContent('');
     removeFile();
 
