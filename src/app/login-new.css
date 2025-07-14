@@ -159,3 +159,32 @@
 .signup-link-new a:hover {
     text-decoration: underline;
 }
+
+/* Styles for the nav button to be less intrusive */
+.login-container-nav {
+  position: relative;
+  padding: 2px;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+  border-radius: 0.5em; /* Match button's default rounded-md */
+  transition: all 0.4s ease;
+}
+.login-container-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 0.5em;
+  z-index: -1;
+  filter: blur(0);
+  transition: filter 0.4s ease;
+}
+.login-container-nav:hover::before {
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+  filter: blur(0.8em);
+}
+.login-container-nav:active::before {
+  filter: blur(0.2em);
+}
+.login-button-nav {
+   background-color: hsl(var(--background));
+}

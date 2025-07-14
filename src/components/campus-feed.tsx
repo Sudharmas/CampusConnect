@@ -32,7 +32,7 @@ interface Post {
     views: number;
     isProject: boolean;
 }
-type Comment = { user: string; text: string };
+type Comment = { id: string, user: string; text: string };
 
 const PostCard = ({ post }: { post: Post }) => {
   const [likes, setLikes] = useState(post.likes);
@@ -47,7 +47,7 @@ const PostCard = ({ post }: { post: Post }) => {
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (newComment.trim()) {
-      setComments(prev => [...prev, { user: "You", text: newComment }]);
+      setComments(prev => [...prev, { id: new Date().toISOString(), user: "You", text: newComment }]);
       setNewComment("");
     }
   };
@@ -136,8 +136,8 @@ const PostCard = ({ post }: { post: Post }) => {
               </DialogHeader>
               <Separator />
               <div className="space-y-4 py-4 max-h-[50vh] overflow-y-auto">
-                {comments.length > 0 ? comments.map((comment, index) => (
-                  <div key={index} className="flex gap-2 text-sm">
+                {comments.length > 0 ? comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-2 text-sm">
                     <Avatar className="h-6 w-6">
                       <AvatarFallback>{comment.user.charAt(0)}</AvatarFallback>
                     </Avatar>

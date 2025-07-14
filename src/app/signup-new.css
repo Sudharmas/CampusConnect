@@ -141,3 +141,53 @@
   color: hsl(var(--primary));
   font-size: 12px;
 }
+
+.signup-button {
+  position: relative;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--accent)), #fc0987);
+  padding: 14px 25px;
+  border-radius: 10px;
+  font-size: 1em; /* Adjusted for consistency */
+  cursor: pointer;
+  border: none; /* Remove default border */
+  display: inline-block; /* Ensure it behaves like a button */
+}
+
+.signup-button-span {
+  position: relative;
+  z-index: 1;
+  display: flex; /* For icon alignment */
+  align-items: center; /* For icon alignment */
+  justify-content: center; /* For icon alignment */
+}
+
+.signup-button::before {
+  content: "";
+  position: absolute;
+  inset: 2px; /* A bit thicker border */
+  background: hsl(var(--background));
+  border-radius: 9px;
+  transition: 0.5s;
+}
+
+.signup-button:hover::before {
+  opacity: 0.8;
+}
+
+.signup-button::after {
+  content: "";
+  position: absolute;
+  inset: 0px;
+  background: linear-gradient(45deg, hsl(var(--primary)), hsl(var(--accent)), #fc0987);
+  border-radius: 9px;
+  transition: 0.5s;
+  opacity: 0;
+  filter: blur(20px);
+  z-index: -1;
+}
+
+.signup-button:hover::after {
+  opacity: 1;
+}

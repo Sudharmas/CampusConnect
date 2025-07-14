@@ -1,15 +1,13 @@
 import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
-import './premium-button.css';
-import './signup-button.css';
-import './login-button.css';
 import './login-new.css';
+import './signup-new.css';
 import './search-bar.css';
 import './loader.css';
 import './campus-feed-card.css';
-import './signup-new.css';
 import './premium.css';
+import './premium-button.css';
 import { LoadingProvider } from '@/context/loading-context';
 
 export const metadata: Metadata = {

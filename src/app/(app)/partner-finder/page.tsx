@@ -144,7 +144,7 @@ export default function PartnerFinderPage() {
                             </div>
                         </div>
                         <Button className="w-full mt-6 button-glow" asChild>
-                           <LoadingLink href={`/profile/${user.id}`}>Connect</LoadingLink>
+                           <LoadingLink href={`/chat?name=${encodeURIComponent(`${user.firstName} ${user.lastName || ''}`.trim())}`}>Connect</LoadingLink>
                         </Button>
                     </CardContent>
                   </Card>
