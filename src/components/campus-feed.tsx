@@ -253,28 +253,21 @@ export function CampusFeed() {
   const handlePost = async () => {
     if (!newPostContent.trim() && !filePreview) return;
 
-    if (!currentUser) {
-        toast({
-            title: "Not Logged In",
-            description: "You must be logged in to create a post.",
-            variant: "destructive"
-        });
-        return;
-    }
+    const authorName = currentUser ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim() : 'User';
+    const authorHandle = currentUser ? `@${currentUser.firstName.toLowerCase()}` : '@user';
 
-    const post: Post = {
-        id: currentUser.id + Date.now(),
-        authorId: currentUser.id,
-        author: `${currentUser.firstName} ${currentUser.lastName || ''}`.trim(),
-        avatar: currentUser?.profilePhotoURL,
-        handle: `@${currentUser.firstName.toLowerCase()}`,
+    // This is a local-only post for testing. It will not be saved to a database.
+    const post = {
+        id: Date.now(), // Use timestamp for unique key in local state
+        authorId: auth.currentUser?.uid || "user1",
+        author: authorName,
+        avatar: 'https://placehold.co/40x40.png',
+        handle: authorHandle,
         time: 'Just now',
-        content: newPostContent,
-        image: filePreview || undefined,
-        dataAiHint: '',
+        content: newPost,
+        image: filePreview, // Use the local blob URL
         likes: 0,
-        comments: [],
-        views: 0,
+        comments: 0,
         isProject: false,
     };
 

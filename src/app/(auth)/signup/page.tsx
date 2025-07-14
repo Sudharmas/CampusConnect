@@ -53,9 +53,13 @@ export default function SignupPage() {
       const schema = data.password ? signupFormSchema : signupFormSchema.omit({ password: true });
       const result = await zodResolver(schema)(data, context, options);
 
-      if (result.errors.collegeID || result.errors.email || result.errors.role) {
-        return result;
-      }
+      if (
+  "collegeID" in result.errors ||
+  "email" in result.errors ||
+  "role" in result.errors
+) {
+  return result;
+}
 
       const college = await getCollegeById(data.collegeID);
       if (!college) {
